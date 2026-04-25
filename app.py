@@ -79,6 +79,10 @@ engine = MatchingEngine(USERS_DB, MATCHES_DB)
 # DEMO DATA — seed with some profiles for demo
 # ─────────────────────────────────────────────
 # seed_demo_profiles is now imported from db_layer
+# Call it on app startup to ensure demo profiles exist
+print("🔄 Seeding demo profiles on startup...")
+seed_demo_profiles()
+print("✅ Demo profiles seeded")
 # ─────────────────────────────────────────────
 # GEMINI AI HELPER
 # ─────────────────────────────────────────────
