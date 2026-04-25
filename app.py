@@ -533,11 +533,14 @@ def profile_step3():
     update_user(user_id, updates)
     
     # Seed initial matches for new user (3 matches in history)
-    try:
-        matches_created = seed_initial_matches(user_id, num_matches=3)
-        print(f"✅ Seeded {matches_created} initial matches for {user_id}")
-    except Exception as e:
-        print(f"⚠️ Could not seed initial matches: {e}")
+       import traceback
+       try:
+           print(f"DEBUG: About to seed matches for {user_id}")
+           matches_created = seed_initial_matches(user_id, num_matches=3)
+           print(f"DEBUG: Seeded {matches_created} initial matches for {user_id}")
+       except Exception as e:
+           print(f"ERROR: Could not seed initial matches: {e}")
+           traceback.print_exc() initial matches: {e}")
 
     return jsonify({
         "success": True,
