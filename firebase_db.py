@@ -910,87 +910,75 @@ def get_user_photos(user_id: str) -> List[str]:
 
 def seed_initial_matches(user_id: str, num_matches: int = 3) -> int:
     """
-    Seed initial matches for a new user.
-    This gives new members matches in their history so they don't have to wait.
-    
-    Args:
-        user_id: The new user's ID
-        num_matches: Number of initial matches to create (default 3)
-    
-    Returns:
-        Number of matches created
+    Seed initial matches for a new user - DIRECT APPROACH.
+    Just adds 3 demo matches to give new users something to see immediately.
     """
     from natal_calculator import get_compatibility_dynamic
     import random
     
+    print(f"🔄 seed_initial_matches called for: {user_id}")
+    
     user = get_user(user_id)
     if not user:
-        print(f"❌ User {user_id} not found for initial match seeding")
+        print(f"❌ User {user_id} not found")
         return 0
     
-    # Get all demo profiles as potential matches
-    demo_ids = ['demo_001', 'demo_002', 'demo_003', 'demo_004', 'demo_005', 'demo_006', 'demo_007']
-    
-    # Filter by orientation compatibility
     user_gender = user.get('gender', 'male')
     user_orient = user.get('orientation', 'straight')
+    print(f"   User gender={user_gender}, orientation={user_orient}")
     
-    compatible_demos = []
-    for demo_id in demo_ids:
-        demo = get_user(demo_id)
-        if not demo:
-            continue
-        
-        demo_gender = demo.get('gender', 'female')
-        
-        # Check orientation compatibility
-        if user_orient == 'straight':
-            if demo_gender != user_gender:
-                compatible_demos.append(demo)
-        elif user_orient == 'gay':
-            if demo_gender == user_gender:
-                compatible_demos.append(demo)
-        elif user_orient == 'bisexual':
-            compatible_demos.append(demo)
+    # Direct selection based on gender/orientation
+    # Demo females: demo_001 (Sophia), demo_003 (Isabelle), demo_005 (Amara), demo_007 (Nadia)
+    # Demo males: demo_002 (Marcus), demo_004 (Jordan), demo_006 (Rafael)
     
-    if not compatible_demos:
-        print(f"⚠️ No compatible demos found for user {user_id}")
-        return 0
+    if user_gender == 'male' and user_orient == 'straight':
+        target_demo_ids = ['demo_001', 'demo_003', 'demo_005', 'demo_007']
+    elif user_gender == 'female' and user_orient == 'straight':
+        target_demo_ids = ['demo_002', 'demo_004', 'demo_006']
+    elif user_orient == 'gay':
+        target_demo_ids = ['demo_002', 'demo_004', 'demo_006'] if user_gender == 'male' else ['demo_001', 'demo_003', 'demo_005', 'demo_007']
+    else:
+        target_demo_ids = ['demo_001', 'demo_002', 'demo_003', 'demo_005', 'demo_007']
     
-    # Shuffle for variety
-    random.shuffle(compatible_demos)
+    random.shuffle(target_demo_ids)
     
-    # Select top N matches
-    selected_demos = compatible_demos[:num_matches]
-    
-    # Create matches with different dates (past 3 days)
     matches_created = 0
     today = datetime.utcnow().date()
     
-    for i, demo in enumerate(selected_demos):
-        # Calculate compatibility
+    for i, demo_id in enumerate(target_demo_ids[:num_matches]):
+        demo = get_user(demo_id)
+        if not demo:
+            print(f"   ⚠️ Demo {demo_id} not found")
+            continue
+        
+        # Simple compatibility calculation
         user_type = user.get('natal_type', 'SD')
         demo_type = demo.get('natal_type', 'SD')
         user_loi = user.get('loi_score', 50)
         demo_loi = demo.get('loi_score', 50)
         
-        compat = get_compatibility_dynamic(user_type, demo_type, user_loi, demo_loi)
+        try:
+            compat = get_compatibility_dynamic(user_type, demo_type, user_loi, demo_loi)
+        except:
+            compat = {'score': 70, 'dynamic': 'Compatible'}
         
-        # Create match with a past date (1-3 days ago)
         match_date = (today - timedelta(days=i+1)).isoformat()
         
         match_data = {
+            'id': f"match_{uuid.uuid4().hex[:12]}",
             'user_id': user_id,
-            'candidate_id': demo['id'],
+            'candidate_id': demo_id,
             'match_date': match_date,
             'compatibility': compat,
-            'compatibility_score': compat.get('score', 50),
-            'dynamic': compat.get('dynamic', 'Unknown'),
+            'compatibility_score': compat.get('score', 70),
+            'dynamic': compat.get('dynamic', 'Compatible'),
             'status': 'pending'
         }
         
         create_match(match_data)
         matches_created += 1
-        print(f"   ✅ Created initial match: {user.get('name', user_id)} ↔ {demo.get('name', demo['id'])} (compat: {compat.get('score', 50)}%)")
+        print(f"   ✅ Match: {user.get('name')} ↔ {demo.get('name')} ({compat.get('score', 70)}%)")
     
+    print(f"✅ Created {matches_created} initial matches for {user_id}")
     return matches_created
+
