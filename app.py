@@ -35,7 +35,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 # Session version - increment this to invalidate ALL old sessions across all users
 # This forces everyone to re-login when deployed
-SESSION_VERSION = '3'
+SESSION_VERSION = '4'
 
 @app.before_request
 def validate_session():

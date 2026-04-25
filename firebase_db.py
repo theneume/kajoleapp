@@ -910,65 +910,60 @@ def get_user_photos(user_id: str) -> List[str]:
 
 def seed_initial_matches(user_id: str, num_matches: int = 3) -> int:
     """
-    Seed initial matches for a new user - DIRECT APPROACH.
-    Just adds 3 demo matches to give new users something to see immediately.
+    Seed initial matches for a new user - SELF-CONTAINED.
+    Creates match records with embedded demo profile data - no DB dependencies.
     """
-    from natal_calculator import get_compatibility_dynamic
     import random
-    
-    print(f"🔄 seed_initial_matches called for: {user_id}")
+    from natal_calculator import get_compatibility_dynamic
     
     user = get_user(user_id)
     if not user:
-        print(f"❌ User {user_id} not found")
         return 0
     
     user_gender = user.get('gender', 'male')
     user_orient = user.get('orientation', 'straight')
-    print(f"   User gender={user_gender}, orientation={user_orient}")
+    user_type = user.get('natal_type', 'SD')
+    user_loi = user.get('loi_score', 50)
     
-    # Direct selection based on gender/orientation
-    # Demo females: demo_001 (Sophia), demo_003 (Isabelle), demo_005 (Amara), demo_007 (Nadia)
-    # Demo males: demo_002 (Marcus), demo_004 (Jordan), demo_006 (Rafael)
+    # Hardcoded attractive demo profiles (NO DB DEPENDENCY)
+    demo_profiles = [
+        {'id': 'demo_sophia', 'name': 'Sophia Chen', 'natal_type': 'SS', 'loi_score': 55, 'gender': 'female', 'age': 26, 'city': 'San Francisco', 'profession': 'UX Designer', 'bio': 'Designing delightful experiences by day, hunting for the best dumplings by night.'},
+        {'id': 'demo_marcus', 'name': 'Marcus Williams', 'natal_type': 'DD', 'loi_score': 71, 'gender': 'male', 'age': 32, 'city': 'Los Angeles', 'profession': 'Film Producer', 'bio': 'Stories are my life - whether producing them or living them.'},
+        {'id': 'demo_isabelle', 'name': 'Isabelle Moreau', 'natal_type': 'SD', 'loi_score': 58, 'gender': 'female', 'age': 27, 'city': 'Paris', 'profession': 'Art Curator', 'bio': 'Passionate about art, culture, and meaningful connections.'},
+        {'id': 'demo_jordan', 'name': 'Jordan Taylor', 'natal_type': 'DS', 'loi_score': 62, 'gender': 'male', 'age': 29, 'city': 'New York', 'profession': 'Architect', 'bio': 'Building spaces that inspire connection and wonder.'},
+        {'id': 'demo_amara', 'name': 'Amara Okonkwo', 'natal_type': 'DD', 'loi_score': 68, 'gender': 'female', 'age': 25, 'city': 'London', 'profession': 'Data Scientist', 'bio': 'Finding patterns in chaos, seeking meaning in moments.'},
+        {'id': 'demo_rafael', 'name': 'Rafael Santos', 'natal_type': 'SS', 'loi_score': 60, 'gender': 'male', 'age': 31, 'city': 'Miami', 'profession': 'Chef', 'bio': 'Creating flavors that tell stories and spark memories.'},
+        {'id': 'demo_nadia', 'name': 'Nadia Al-Hassan', 'natal_type': 'DD', 'loi_score': 73, 'gender': 'female', 'age': 28, 'city': 'Dubai', 'profession': 'Marketing Director', 'bio': 'Ambitious, cultured, and deeply curious about the world.'},
+    ]
     
+    # Filter by gender/orientation
     if user_gender == 'male' and user_orient == 'straight':
-        target_demo_ids = ['demo_001', 'demo_003', 'demo_005', 'demo_007']
+        targets = [p for p in demo_profiles if p['gender'] == 'female']
     elif user_gender == 'female' and user_orient == 'straight':
-        target_demo_ids = ['demo_002', 'demo_004', 'demo_006']
+        targets = [p for p in demo_profiles if p['gender'] == 'male']
     elif user_orient == 'gay':
-        target_demo_ids = ['demo_002', 'demo_004', 'demo_006'] if user_gender == 'male' else ['demo_001', 'demo_003', 'demo_005', 'demo_007']
+        targets = [p for p in demo_profiles if p['gender'] == user_gender]
     else:
-        target_demo_ids = ['demo_001', 'demo_002', 'demo_003', 'demo_005', 'demo_007']
+        targets = demo_profiles
     
-    random.shuffle(target_demo_ids)
+    random.shuffle(targets)
+    targets = targets[:num_matches]
     
-    matches_created = 0
     today = datetime.utcnow().date()
+    matches_created = 0
     
-    for i, demo_id in enumerate(target_demo_ids[:num_matches]):
-        demo = get_user(demo_id)
-        if not demo:
-            print(f"   ⚠️ Demo {demo_id} not found")
-            continue
-        
-        # Simple compatibility calculation
-        user_type = user.get('natal_type', 'SD')
-        demo_type = demo.get('natal_type', 'SD')
-        user_loi = user.get('loi_score', 50)
-        demo_loi = demo.get('loi_score', 50)
-        
+    for i, demo in enumerate(targets):
         try:
-            compat = get_compatibility_dynamic(user_type, demo_type, user_loi, demo_loi)
+            compat = get_compatibility_dynamic(user_type, demo['natal_type'], user_loi, demo['loi_score'])
         except:
-            compat = {'score': 70, 'dynamic': 'Compatible'}
-        
-        match_date = (today - timedelta(days=i+1)).isoformat()
+            compat = {'score': random.randint(65, 85), 'dynamic': 'Compatible'}
         
         match_data = {
             'id': f"match_{uuid.uuid4().hex[:12]}",
             'user_id': user_id,
-            'candidate_id': demo_id,
-            'match_date': match_date,
+            'candidate_id': demo['id'],
+            'candidate': demo,  # EMBED the profile data so it displays correctly
+            'match_date': (today - timedelta(days=i+1)).isoformat(),
             'compatibility': compat,
             'compatibility_score': compat.get('score', 70),
             'dynamic': compat.get('dynamic', 'Compatible'),
@@ -977,8 +972,5 @@ def seed_initial_matches(user_id: str, num_matches: int = 3) -> int:
         
         create_match(match_data)
         matches_created += 1
-        print(f"   ✅ Match: {user.get('name')} ↔ {demo.get('name')} ({compat.get('score', 70)}%)")
     
-    print(f"✅ Created {matches_created} initial matches for {user_id}")
     return matches_created
-
