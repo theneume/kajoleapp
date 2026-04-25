@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kajole — One Match. Every Day.</title>
+  <link rel="stylesheet" href="/static/css/kajole.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+
+<!-- ─── LOADING OVERLAY ─── -->
+<div class="loading-overlay hidden" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <p class="loading-text" id="loading-text">Finding your universe...</p>
+</div>
+
+<!-- ─── TOAST CONTAINER ─── -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ─── MODAL ─── -->
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal" id="modal">
+    <h3 class="modal-title" id="modal-title"></h3>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     APP ROOT
+══════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- ──────────────────────────────────────
+       SCREEN 1: LANDING
+  ────────────────────────────────────────── -->
+  <div class="screen active" id="screen-landing">
+    <div class="landing-bg"></div>
+    <div class="landing-grain"></div>
+
+    <div style="position:relative;z-index:1;max-width:700px;width:100%;">
+      <div class="landing-logo">KAJ<span>O</span>LE</div>
+      <div class="landing-tagline">One match · Every day · No noise</div>
+
+      <div class="landing-headline">
+        The antidote to swipe fatigue.<br>
+        One soul. Every 24 hours.
+      </div>
+
+      <p class="landing-sub">
+        No browsing. No swiping. No algorithms built for addiction.
+        Just one deeply matched person — delivered to your inbox each morning,
+        powered by psychology you can actually feel.
+      </p>
+
+      <div class="landing-actions">
+        <button class="btn btn-primary btn-lg" onclick="showScreen('auth', 'register')">
+          ✦ Begin your journey
+        </button>
+        <button class="btn btn-ghost btn-lg" onclick="showScreen('auth', 'login')">
+          Sign in
+        </button>
+      </div>
+    </div>
+
+    <div class="landing-feature-row">
+      <div class="landing-feature">
+        <span class="landing-feature-icon">🧠</span>
+        Deepsyke<br>Psychology
+      </div>
+      <div class="landing-feature">
+        <span class="landing-feature-icon">✦</span>
+        One Match<br>Per Day
+      </div>
+      <div class="landing-feature">
+        <span class="landing-feature-icon">🔥</span>
+        Slow Burn<br>Connections
+      </div>
+      <div class="landing-feature">
+        <span class="landing-feature-icon">🤖</span>
+        AI Dating<br>Companion
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ──────────────────────────────────────
+       SCREEN 2: AUTH
+  ────────────────────────────────────────── -->
+  <div class="screen" id="screen-auth">
+    <div class="auth-card">
+      <div class="auth-logo">KAJ<span>O</span>LE</div>
+      <div class="auth-sub">Slow Burn Dating</div>
+
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Sign In</div>
+        <div class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Join</div>
+      </div>
+
+      <!-- Login Form -->
+      <div id="form-login">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" id="login-email" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="login-password" placeholder="••••••••">
+        </div>
+        <div class="form-error" id="login-error"></div>
+        <div style="margin-bottom:1rem;">
+          <button class="btn btn-primary btn-full" onclick="doLogin()">Enter Kajole</button>
+        </div>
+        <p style="text-align:center;font-size:0.78rem;color:var(--text3);">
+          Demo: <strong>demo@kajole.com</strong> / <strong>demo</strong>
+        </p>
+      </div>
+
+      <!-- Register Form -->
+      <div id="form-register" class="hidden">
+        <div class="form-group">
+          <label class="form-label">Your name</label>
+          <input class="form-input" type="text" id="reg-name" placeholder="First name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" id="reg-email" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="reg-password" placeholder="Create a password">
+        </div>
+        <div class="form-error" id="reg-error"></div>
+        <div style="margin-bottom:1rem;">
+          <button class="btn btn-primary btn-full" onclick="doRegister()">Create Account</button>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <p style="text-align:center;">
+        <button class="btn btn-ghost btn-sm" onclick="showScreen('landing')">← Back</button>
+      </p>
+    </div>
+  </div>
+
+
+  <!-- ──────────────────────────────────────
+       SCREEN 3: ONBOARDING
+  ────────────────────────────────────────── -->
+  <div class="screen" id="screen-onboard">
+    <div class="onboard-layout">
+
+      <!-- Sidebar -->
+      <div class="onboard-sidebar">
+        <div class="onboard-logo">KAJ<span>O</span>LE</div>
+
+        <div class="onboard-steps">
+          <div class="onboard-step-item active" id="sidebar-step-1">
+            <div class="step-dot" id="dot-1">1</div>
+            <div class="step-info">
+              <div class="step-label">Who you are</div>
+              <div class="step-desc">Your story & basics</div>
+            </div>
+          </div>
+          <div class="onboard-step-item" id="sidebar-step-2">
+            <div class="step-dot" id="dot-2">2</div>
+            <div class="step-info">
+              <div class="step-label">What you seek</div>
+              <div class="step-desc">Your preferences</div>
+            </div>
+          </div>
+          <div class="onboard-step-item" id="sidebar-step-3">
+            <div class="step-dot" id="dot-3">3</div>
+            <div class="step-info">
+              <div class="step-label">Deepsyke Test</div>
+              <div class="step-desc">Your psychological blueprint</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:auto;font-size:0.75rem;color:var(--text3);line-height:1.6;">
+          Your answers are private.<br>
+          We use them only to find<br>
+          your most meaningful match.
+        </div>
+      </div>
+
+      <!-- Main content -->
+      <div class="onboard-main" id="onboard-main">
+
+        <!-- STEP 1: Basic Profile -->
+        <div id="onboard-step-1">
+          <div class="onboard-section-title">Let's start with you</div>
+          <p class="onboard-section-sub">This is what your matches will see. Be real — that's what we're here for.</p>
+
+          <!-- Photo Upload Section -->
+          <div class="photo-upload-section">
+            <div class="photo-upload-title">Add your photos</div>
+            <div class="photo-upload-subtitle">Add at least one photo. Up to 6 photos allowed.</div>
+            <div class="photo-grid" id="photo-grid">
+              <div class="photo-slot" id="photo-slot-0" onclick="triggerPhotoUpload(0)">
+                <span class="add-icon">+</span>
+              </div>
+              <div class="photo-slot" id="photo-slot-1" onclick="triggerPhotoUpload(1)">
+                <span class="add-icon">+</span>
+              </div>
+              <div class="photo-slot" id="photo-slot-2" onclick="triggerPhotoUpload(2)">
+                <span class="add-icon">+</span>
+              </div>
+              <div class="photo-slot" id="photo-slot-3" onclick="triggerPhotoUpload(3)">
+                <span class="add-icon">+</span>
+              </div>
+              <div class="photo-slot" id="photo-slot-4" onclick="triggerPhotoUpload(4)">
+                <span class="add-icon">+</span>
+              </div>
+              <div class="photo-slot" id="photo-slot-5" onclick="triggerPhotoUpload(5)">
+                <span class="add-icon">+</span>
+              </div>
+            </div>
+            <input type="file" id="photo-upload-input" class="photo-upload-hidden" accept="image/jpeg,image/png,image/webp" onchange="handlePhotoUpload(event)">
+          </div>
+          <!-- End Photo Upload Section -->
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First name</label>
+              <input class="form-input" type="text" id="s1-name" placeholder="Your name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Age</label>
+              <input class="form-input" type="number" id="s1-age" placeholder="28" min="18" max="80">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Date of birth</label>
+              <input class="form-input" type="date" id="s1-dob" max="2006-01-01">
+              <span class="form-hint">Used to calculate your Deepsyke blueprint</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gender</label>
+              <select class="form-select" id="s1-gender">
+                <option value="">Select</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">City</label>
+              <input class="form-input" type="text" id="s1-city" placeholder="London">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Country</label>
+              <input class="form-input" type="text" id="s1-country" placeholder="UK">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Sexual orientation</label>
+            <div class="pill-group">
+              <div class="pill-option"><input type="radio" name="orientation" value="straight" id="or-straight"><label for="or-straight">Straight</label></div>
+              <div class="pill-option"><input type="radio" name="orientation" value="gay" id="or-gay"><label for="or-gay">Gay / Lesbian</label></div>
+              <div class="pill-option"><input type="radio" name="orientation" value="bisexual" id="or-bi"><label for="or-bi">Bisexual</label></div>
+              <div class="pill-option"><input type="radio" name="orientation" value="other" id="or-other"><label for="or-other">Other</label></div>
+            </div>
+          </div>
+
+          <div class="form-section-title">Professional</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Profession</label>
+              <input class="form-input" type="text" id="s1-profession" placeholder="What you do">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Education</label>
+              <input class="form-input" type="text" id="s1-education" placeholder="Highest qualification">
+            </div>
+          </div>
+
+          <div class="form-section-title">Your Story</div>
+
+          <div class="form-group">
+            <label class="form-label">Bio <span style="color:var(--text3);font-weight:normal;">(what you want people to know)</span></label>
+            <textarea class="form-textarea" id="s1-bio" placeholder="Tell us who you are in a few sentences. Don't overthink it — just be honest." rows="4"></textarea>
+            <span class="form-hint">Need help? Our AI can write it for you.</span>
+          </div>
+
+          <div id="bio-helper-area" class="hidden">
+            <div class="card" style="margin-top:1rem;">
+              <p style="font-size:0.85rem;color:var(--text2);margin-bottom:1rem;">Quick answers → AI writes your bio</p>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Top 2 interests</label>
+                  <input class="form-input" id="bio-interests" placeholder="e.g. jazz, rock climbing">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">What you're really like</label>
+                  <input class="form-input" id="bio-personality" placeholder="e.g. sarcastic but warm">
+                </div>
+              </div>
+              <button class="btn btn-surface btn-sm" onclick="generateBio()">✨ Generate bios</button>
+            </div>
+            <div id="bio-options" class="hidden" style="margin-top:1rem;display:flex;flex-direction:column;gap:0.75rem;"></div>
+          </div>
+
+          <button class="btn btn-ghost btn-sm" style="margin-bottom:1.5rem;" onclick="toggleBioHelper()">✨ Help me write my bio</button>
+
+          <div class="form-section-title">Identity</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Religion / Spirituality</label>
+              <select class="form-select" id="s1-religion">
+                <option value="none">Not religious</option>
+                <option value="spiritual">Spiritual (no religion)</option>
+                <option value="christian">Christian</option>
+                <option value="muslim">Muslim</option>
+                <option value="jewish">Jewish</option>
+                <option value="hindu">Hindu</option>
+                <option value="buddhist">Buddhist</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ethnicity</label>
+              <select class="form-select" id="s1-ethnicity">
+                <option value="any">Prefer not to say</option>
+                <option value="white">White / Caucasian</option>
+                <option value="black">Black / African</option>
+                <option value="asian">Asian</option>
+                <option value="latin">Latin / Hispanic</option>
+                <option value="middle_eastern">Middle Eastern</option>
+                <option value="mixed">Mixed</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Lifestyle interests <span style="color:var(--text3);font-weight:normal;">(select all that apply)</span></label>
+            <div class="pill-group">
+              <div class="pill-option"><input type="checkbox" name="lifestyle" value="travel" id="ls-travel"><label for="ls-travel">✈ Travel</label></div>
+              <div class="pill-option"><input type="checkbox" name="lifestyle" value="fitness" id="ls-fit"><label for="ls-fit">💪 Fitness</label></div>
+              <div class="pill-option"><input type="checkbox" name="lifestyle" value="art" id="ls-art"><label for="ls-art">🎨 Art</label></div>
+              <div class="pill-option"><input type="checkbox" name="lifestyle" value="music" id="ls-music"><label for="ls-music">🎵 Music</label></div>
+              <div class="pill-option"><input type="checkbox" name="lifestyle" value="food" id="ls-food"><label for="ls-food">🍷 Food & Wine</label></div>
+              <div class="pill-option"><input type="checkbox" name="lifestyle" value="reading" id="ls-read"><label for="ls-read">📚 Reading</label></div>
+              <div class="pill-option"><input type="checkbox" name="lifestyle" value="tech" id="ls-tech"><label for="ls-tech">⚡ Tech</label></div>
+              <div class="pill-option"><input type="checkbox" name="lifestyle" value="yoga" id="ls-yoga"><label for="ls-yoga">🧘 Mindfulness</label></div>
+              <div class="pill-option"><input type="checkbox" name="lifestyle" value="business" id="ls-biz"><label for="ls-biz">📈 Business</label></div>
+              <div class="pill-option"><input type="checkbox" name="lifestyle" value="nature" id="ls-nature"><label for="ls-nature">🌿 Nature</label></div>
+              <div class="pill-option"><input type="checkbox" name="lifestyle" value="fashion" id="ls-fashion"><label for="ls-fashion">👗 Fashion</label></div>
+              <div class="pill-option"><input type="checkbox" name="lifestyle" value="sport" id="ls-sport"><label for="ls-sport">⚽ Sport</label></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Social style</label>
+            <div class="pill-group">
+              <div class="pill-option"><input type="radio" name="social" value="introvert" id="ss-intro"><label for="ss-intro">🌙 Introvert</label></div>
+              <div class="pill-option"><input type="radio" name="social" value="ambivert" id="ss-ambi"><label for="ss-ambi">⚡ Ambivert</label></div>
+              <div class="pill-option"><input type="radio" name="social" value="extrovert" id="ss-extro"><label for="ss-extro">☀️ Extrovert</label></div>
+            </div>
+          </div>
+
+          <div class="form-section-title">Attractiveness</div>
+
+          <div class="form-group">
+            <label class="form-label">How attractive do you think you are? <span id="s1-attract-val" style="color:var(--accent);">7</span>/10</label>
+            <input type="range" class="form-slider" id="s1-attract" min="1" max="10" value="7" oninput="document.getElementById('s1-attract-val').textContent=this.value">
+            <div class="slider-labels"><span>Modest</span><span>Average</span><span>Very attractive</span></div>
+            <span class="form-hint">Be honest — this helps our AI calibrate your matches appropriately.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">How intellectually curious are you? <span id="s1-intel-val" style="color:var(--accent);">7</span>/10</label>
+            <input type="range" class="form-slider" id="s1-intel" min="1" max="10" value="7" oninput="document.getElementById('s1-intel-val').textContent=this.value">
+            <div class="slider-labels"><span>Practical</span><span>Balanced</span><span>Deeply curious</span></div>
+          </div>
+
+          <div style="margin-top:2.5rem;display:flex;gap:1rem;">
+            <button class="btn btn-primary btn-lg" onclick="submitStep1()">Continue →</button>
+          </div>
+        </div>
+
+
+        <!-- STEP 2: Preferences -->
+        <div id="onboard-step-2" class="hidden">
+          <div class="onboard-section-title">What you're looking for</div>
+          <p class="onboard-section-sub">Be specific. The more clearly you know what you want, the better our algorithm can find it.</p>
+
+          <div class="form-section-title">Age Range</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Minimum age</label>
+              <input class="form-input" type="number" id="s2-age-min" value="24" min="18" max="80">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Maximum age</label>
+              <input class="form-input" type="number" id="s2-age-max" value="40" min="18" max="80">
+            </div>
+          </div>
+
+          <div class="form-section-title">Location</div>
+
+          <div class="form-group">
+            <label class="form-label">Where should they be?</label>
+            <div class="pill-group">
+              <div class="pill-option"><input type="radio" name="loc-pref" value="same_city" id="lp-city"><label for="lp-city">📍 Same city</label></div>
+              <div class="pill-option"><input type="radio" name="loc-pref" value="same_country" id="lp-country"><label for="lp-country">🌍 Same country</label></div>
+              <div class="pill-option"><input type="radio" name="loc-pref" value="worldwide" id="lp-world" checked><label for="lp-world">🌐 Worldwide</label></div>
+            </div>
+          </div>
+
+          <div class="form-section-title">Identity Preferences</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Religion preference</label>
+              <select class="form-select" id="s2-religion">
+                <option value="any">Open to any</option>
+                <option value="none">Not religious</option>
+                <option value="spiritual">Spiritual</option>
+                <option value="christian">Christian</option>
+                <option value="muslim">Muslim</option>
+                <option value="jewish">Jewish</option>
+                <option value="same">Same as mine</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ethnicity preference</label>
+              <select class="form-select" id="s2-ethnicity">
+                <option value="any">Open to all</option>
+                <option value="white">White / Caucasian</option>
+                <option value="black">Black / African</option>
+                <option value="asian">Asian</option>
+                <option value="latin">Latin / Hispanic</option>
+                <option value="middle_eastern">Middle Eastern</option>
+                <option value="mixed">Mixed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-section-title">What matters to you</div>
+
+          <div class="form-group">
+            <label class="form-label">Minimum attractiveness <span id="s2-attract-val" style="color:var(--accent);">6</span>/10</label>
+            <input type="range" class="form-slider" id="s2-attract" min="1" max="10" value="6" oninput="document.getElementById('s2-attract-val').textContent=this.value">
+            <div class="slider-labels"><span>Not a factor</span><span>Some preference</span><span>Very important</span></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Describe your ideal partner <span style="color:var(--text3);font-weight:normal;">(in your own words)</span></label>
+            <textarea class="form-textarea" id="s2-partner" placeholder="What kind of person are you genuinely looking for? What do they feel like? What do they bring into your life?" rows="4"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Absolute deal-breakers <span style="color:var(--text3);font-weight:normal;">(optional)</span></label>
+            <div class="pill-group">
+              <div class="pill-option"><input type="checkbox" name="dealbreaker" value="smoker" id="db-smoke"><label for="db-smoke">🚬 Smoker</label></div>
+              <div class="pill-option"><input type="checkbox" name="dealbreaker" value="no_kids_ever" id="db-kids"><label for="db-kids">🚫 Wants no children</label></div>
+              <div class="pill-option"><input type="checkbox" name="dealbreaker" value="long_distance" id="db-ld"><label for="db-ld">✈ Long distance</label></div>
+              <div class="pill-option"><input type="checkbox" name="dealbreaker" value="heavy_drinking" id="db-drink"><label for="db-drink">🍺 Heavy drinking</label></div>
+              <div class="pill-option"><input type="checkbox" name="dealbreaker" value="different_values" id="db-val"><label for="db-val">🧭 Very different values</label></div>
+            </div>
+          </div>
+
+          <div style="margin-top:2.5rem;display:flex;gap:1rem;">
+            <button class="btn btn-ghost" onclick="goOnboardStep(1)">← Back</button>
+            <button class="btn btn-primary btn-lg" onclick="submitStep2()">Continue →</button>
+          </div>
+        </div>
+
+
+        <!-- STEP 3: Deepsyke Test -->
+        <div id="onboard-step-3" class="hidden">
+          <div class="deepsyke-intro">
+            <span class="deepsyke-symbol">🔮</span>
+            <div class="onboard-section-title">The Deepsyke Blueprint</div>
+            <p class="onboard-section-sub" style="max-width:440px;margin:0 auto 2rem;">
+              Five questions. No right answers. This reveals how you process reality — and who you're actually compatible with beneath the surface.
+            </p>
+          </div>
+
+          <!-- Q1 -->
+          <div class="deepsyke-q-card" id="dq-1">
+            <div class="deepsyke-q-num">Question 01 of 05</div>
+            <div class="deepsyke-q-text">When you make a big decision, what does that feel like from the inside?</div>
+            <div class="deepsyke-scale">
+              <div class="scale-option" onclick="selectScale('q1', 1, this)">
+                <input type="radio" name="q1" value="1"><div class="scale-dot"></div>
+                <span class="scale-text">I need a lot of time — I gather information, sit with it, and decide slowly</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q1', 2, this)">
+                <input type="radio" name="q1" value="2"><div class="scale-dot"></div>
+                <span class="scale-text">I take my time but I follow a structured process to reach clarity</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q1', 3, this)">
+                <input type="radio" name="q1" value="3"><div class="scale-dot"></div>
+                <span class="scale-text">I'm somewhere in between — it depends on the situation</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q1', 4, this)">
+                <input type="radio" name="q1" value="4"><div class="scale-dot"></div>
+                <span class="scale-text">I make quick decisions and refine as I go</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q1', 5, this)">
+                <input type="radio" name="q1" value="5"><div class="scale-dot"></div>
+                <span class="scale-text">My gut fires first and I trust it — action is my answer</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q2 -->
+          <div class="deepsyke-q-card" id="dq-2">
+            <div class="deepsyke-q-num">Question 02 of 05</div>
+            <div class="deepsyke-q-text">You've had a long, draining week. What genuinely restores you?</div>
+            <div class="deepsyke-scale">
+              <div class="scale-option" onclick="selectScale('q2', 1, this)">
+                <input type="radio" name="q2" value="1"><div class="scale-dot"></div>
+                <span class="scale-text">Absolute solitude — quiet, no demands, deep rest</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q2', 2, this)">
+                <input type="radio" name="q2" value="2"><div class="scale-dot"></div>
+                <span class="scale-text">One meaningful conversation with someone I trust</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q2', 3, this)">
+                <input type="radio" name="q2" value="3"><div class="scale-dot"></div>
+                <span class="scale-text">A mix — some alone time, then social energy</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q2', 4, this)">
+                <input type="radio" name="q2" value="4"><div class="scale-dot"></div>
+                <span class="scale-text">Being around people, doing something active and social</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q2', 5, this)">
+                <input type="radio" name="q2" value="5"><div class="scale-dot"></div>
+                <span class="scale-text">Jumping straight into the next thing — momentum is my medicine</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q3 -->
+          <div class="deepsyke-q-card" id="dq-3">
+            <div class="deepsyke-q-num">Question 03 of 05</div>
+            <div class="deepsyke-q-text">How much do other people's opinions of you actually affect how you feel about yourself?</div>
+            <div class="deepsyke-scale">
+              <div class="scale-option" onclick="selectScale('q3', 1, this)">
+                <input type="radio" name="q3" value="1"><div class="scale-dot"></div>
+                <span class="scale-text">Deeply — external validation matters a lot to my wellbeing</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q3', 2, this)">
+                <input type="radio" name="q3" value="2"><div class="scale-dot"></div>
+                <span class="scale-text">Somewhat — I care what people think but I try not to let it run me</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q3', 3, this)">
+                <input type="radio" name="q3" value="3"><div class="scale-dot"></div>
+                <span class="scale-text">It depends on who's giving the opinion</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q3', 4, this)">
+                <input type="radio" name="q3" value="4"><div class="scale-dot"></div>
+                <span class="scale-text">Not much — I have a strong internal compass</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q3', 5, this)">
+                <input type="radio" name="q3" value="5"><div class="scale-dot"></div>
+                <span class="scale-text">Barely at all — I know who I am and that's enough</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q4 -->
+          <div class="deepsyke-q-card" id="dq-4">
+            <div class="deepsyke-q-num">Question 04 of 05</div>
+            <div class="deepsyke-q-text">In your most important relationships, what's been the recurring pattern?</div>
+            <div class="deepsyke-scale">
+              <div class="scale-option" onclick="selectScale('q4', 1, this)">
+                <input type="radio" name="q4" value="1"><div class="scale-dot"></div>
+                <span class="scale-text">I give too much and don't set strong enough boundaries</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q4', 2, this)">
+                <input type="radio" name="q4" value="2"><div class="scale-dot"></div>
+                <span class="scale-text">I'm loyal and consistent but can be too cautious about change</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q4', 3, this)">
+                <input type="radio" name="q4" value="3"><div class="scale-dot"></div>
+                <span class="scale-text">Honestly varied — I show up differently in different relationships</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q4', 4, this)">
+                <input type="radio" name="q4" value="4"><div class="scale-dot"></div>
+                <span class="scale-text">I start with intense connection but can struggle to sustain depth</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q4', 5, this)">
+                <input type="radio" name="q4" value="5"><div class="scale-dot"></div>
+                <span class="scale-text">I move fast and need freedom — commitment can feel like a cage</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q5 -->
+          <div class="deepsyke-q-card" id="dq-5">
+            <div class="deepsyke-q-num">Question 05 of 05</div>
+            <div class="deepsyke-q-text">How comfortable are you with who you are, right now, today?</div>
+            <div class="deepsyke-scale">
+              <div class="scale-option" onclick="selectScale('q5', 1, this)">
+                <input type="radio" name="q5" value="1"><div class="scale-dot"></div>
+                <span class="scale-text">Not very — I'm still figuring myself out and it's unsettling</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q5', 2, this)">
+                <input type="radio" name="q5" value="2"><div class="scale-dot"></div>
+                <span class="scale-text">Somewhat — I know myself but I'm still working on accepting parts of me</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q5', 3, this)">
+                <input type="radio" name="q5" value="3"><div class="scale-dot"></div>
+                <span class="scale-text">Reasonably — I'm comfortable but still growing</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q5', 4, this)">
+                <input type="radio" name="q5" value="4"><div class="scale-dot"></div>
+                <span class="scale-text">Quite — I know who I am and I'm at peace with most of it</span>
+              </div>
+              <div class="scale-option" onclick="selectScale('q5', 5, this)">
+                <input type="radio" name="q5" value="5"><div class="scale-dot"></div>
+                <span class="scale-text">Fully — I'm deeply aligned with myself right now</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:2.5rem;display:flex;gap:1rem;justify-content:center;">
+            <button class="btn btn-ghost" onclick="goOnboardStep(2)">← Back</button>
+            <button class="btn btn-primary btn-lg" onclick="submitStep3()">✦ Reveal my blueprint</button>
+          </div>
+        </div>
+
+
+        <!-- STEP 4: ARCHETYPE REVEAL -->
+        <div id="onboard-step-4" class="hidden">
+          <div class="archetype-reveal" id="archetype-reveal-content">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ──────────────────────────────────────
+       SCREEN 4: MAIN APP
+  ────────────────────────────────────────── -->
+  <div class="screen" id="screen-app">
+
+    <!-- Sidebar navigation -->
+    <nav class="app-sidebar">
+      <div class="sidebar-logo-dot">K</div>
+
+      <div class="sidebar-nav">
+        <div class="sidebar-nav-item active" id="nav-today" onclick="switchView('today')">
+          ✦
+          <div class="nav-tooltip">Today's Match</div>
+        </div>
+        <div class="sidebar-nav-item" id="nav-inbox" onclick="switchView('inbox')">
+          💬
+          <div class="nav-tooltip">Inbox</div>
+          <div class="notif-dot hidden" id="inbox-notif"></div>
+        </div>
+        <div class="sidebar-nav-item" id="nav-history" onclick="switchView('history')">
+          🗓
+          <div class="nav-tooltip">Match History</div>
+        </div>
+        <div class="sidebar-nav-item" id="nav-ai" onclick="switchView('ai')">
+          🤖
+          <div class="nav-tooltip">AI Companion</div>
+        </div>
+        <div class="sidebar-nav-item" id="nav-profile" onclick="switchView('profile')">
+          👤
+          <div class="nav-tooltip">My Profile</div>
+        </div>
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="sidebar-avatar" id="sidebar-avatar" onclick="switchView('profile')">A</div>
+      </div>
+    </nav>
+
+    <!-- App main content -->
+    <main class="app-main">
+
+      <!-- ── VIEW: TODAY'S MATCH ── -->
+      <div class="app-view active" id="view-today">
+        <div class="today-header">
+          <div>
+            <div class="today-date" id="today-date">MONDAY · JAN 27</div>
+            <div class="today-title">Today's Match</div>
+          </div>
+          <div class="badge badge-gold">✦ 1 per day</div>
+        </div>
+
+        <div id="match-content">
+          <!-- Filled by JS -->
+          <div class="flex-center" style="padding:4rem;">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ── VIEW: INBOX ── -->
+      <div class="app-view" id="view-inbox">
+        <div class="section-title">Inbox</div>
+        <p class="section-sub">Conversations with your matches</p>
+
+        <div id="inbox-content">
+          <div class="flex-center" style="padding:4rem;">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ── VIEW: MATCH HISTORY ── -->
+      <div class="app-view" id="view-history">
+        <div class="section-title">Match History</div>
+        <p class="section-sub">Every soul the universe has sent your way</p>
+
+        <div id="history-content">
+          <div class="flex-center" style="padding:4rem;">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ── VIEW: AI COMPANION ── -->
+      <div class="app-view" id="view-ai">
+        <div class="section-title">Your AI Companion</div>
+        <p class="section-sub">Powered by Deepsyke — your personal psychology-informed dating coach</p>
+
+        <div class="ai-chat-wrapper" style="display:flex;flex-direction:column;">
+          <div class="ai-header">
+            <div class="ai-avatar">🔮</div>
+            <div>
+              <div class="ai-name">Kajole AI</div>
+              <div class="ai-status">Active · Deepsyke Intelligence</div>
+            </div>
+          </div>
+
+          <div class="ai-quick-prompts" id="ai-quick-prompts">
+            <div class="quick-prompt" onclick="sendQuickPrompt(this)">Too boring for me</div>
+            <div class="quick-prompt" onclick="sendQuickPrompt(this)">I want someone more intense</div>
+            <div class="quick-prompt" onclick="sendQuickPrompt(this)">Why did you match us?</div>
+            <div class="quick-prompt" onclick="sendQuickPrompt(this)">Show me someone more attractive</div>
+            <div class="quick-prompt" onclick="sendQuickPrompt(this)">Tell me about my type</div>
+            <div class="quick-prompt" onclick="sendQuickPrompt(this)">Am I ready for a relationship?</div>
+          </div>
+
+          <div class="ai-messages" id="ai-messages">
+            <div class="ai-message ai">
+              <div class="msg-avatar">🔮</div>
+              <div class="msg-bubble">
+                Welcome. I'm your Kajole companion — part dating coach, part psychologist, part your most honest mirror. I know your psychological blueprint intimately. Ask me anything about your matches, your patterns, or what you're really looking for. I'm here for all of it.
+              </div>
+            </div>
+          </div>
+
+          <div class="ai-input-area">
+            <input class="ai-input" id="ai-input" placeholder="Tell me about your last match, or ask me anything..." onkeydown="if(event.key==='Enter')sendAIMessage()">
+            <button class="ai-send-btn" onclick="sendAIMessage()">→</button>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ── VIEW: PROFILE ── -->
+      <div class="app-view" id="view-profile">
+        <div id="profile-content">
+          <div class="flex-center" style="padding:4rem;">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+</div><!-- /#app -->
+
+<script src="/static/js/kajole.js"></script>
+</body>
+</html>
