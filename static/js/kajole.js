@@ -75,10 +75,14 @@ function showModal(title, body, actions = []) {
     const btn = document.createElement('button');
     btn.className = `btn ${a.class || 'btn-ghost'}`;
     btn.textContent = a.label;
-    btn.onclick = () => {
-      closeModal();
-      if (a.action) a.action();
-    };
+    if (typeof a.onclick === 'string') {
+      btn.setAttribute('onclick', a.onclick);
+    } else {
+      btn.onclick = () => {
+        closeModal();
+        if (a.action) a.action();
+      };
+    }
     actionsEl.appendChild(btn);
   });
   document.getElementById('modal-overlay').classList.remove('hidden');
@@ -728,6 +732,7 @@ function renderMatchCard(candidate, matchRecord, alreadySentHi) {
         <div class="match-actions">
           ${hiButton}
           <button class="btn btn-ghost" onclick="switchView('ai')">Ask AI about this match</button>
+          <button class="btn btn-ghost" onclick="openMatchFullProfile()">View Full Profile</button>
         </div>
       </div>
     </div>
@@ -1053,11 +1058,20 @@ function renderHistoryCard(match) {
     archived: '◌ Archived'
   };
   const statusClass = `status-${match.status || 'pending'}`;
+  
+  // Avatar: use photo if available, else gradient avatar
+  const photos = c.photos || [];
+  const avatarHtml = photos.length > 0
+    ? `<img src="${photos[0]}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+    : initials;
+  
+  // Store match data as JSON for click handler
+  const matchJson = encodeURIComponent(JSON.stringify({candidate: c, compatibility: compat, status: match.status, match_date: match.match_date}));
 
   return `
-    <div class="history-card">
+    <div class="history-card" onclick="openCandidateProfile('${matchJson}')" style="cursor:pointer;">
       <div class="history-card-top">
-        <div class="history-avatar">${initials}</div>
+        <div class="history-avatar">${avatarHtml}</div>
         <div>
           <div class="history-name">${c.name || 'Match'}</div>
           <div class="history-date">${formatDate(match.match_date)}</div>
@@ -1067,8 +1081,83 @@ function renderHistoryCard(match) {
       <div style="font-size:0.82rem;color:var(--text3);margin-bottom:0.5rem;">${c.profession || ''} · ${c.city || ''}</div>
       <div class="history-compat">${compat.score || '--'}%</div>
       <div style="font-size:0.72rem;color:var(--text3);font-family:var(--font-mono);">${compat.dynamic || 'Compatibility'}</div>
+      <div style="font-size:0.72rem;color:var(--accent);margin-top:0.5rem;font-family:var(--font-mono);">TAP TO VIEW PROFILE →</div>
     </div>
   `;
+}
+
+// ═══════════════════════════════════════════════════════
+// CANDIDATE PROFILE MODAL
+// ═══════════════════════════════════════════════════════
+function openCandidateProfile(encodedData) {
+  const data = JSON.parse(decodeURIComponent(encodedData));
+  const c = data.candidate || {};
+  const compat = data.compatibility || {};
+  
+  const initials = getInitials(c.name);
+  const photos = c.photos || [];
+  const archetype = c.archetype || {};
+  const archetypeName = archetype.title || archetype.name || '';
+  
+  // Photo/avatar display
+  const photoHtml = photos.length > 0
+    ? `<div style="width:120px;height:120px;border-radius:50%;overflow:hidden;margin:0 auto 1rem;border:3px solid var(--accent);">
+        <img src="${photos[0]}" style="width:100%;height:100%;object-fit:cover;">
+       </div>`
+    : `<div style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2,#8b5cf6));display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:700;color:white;margin:0 auto 1rem;">${initials}</div>`;
+
+  const tags = [
+    c.profession,
+    c.city,
+    ...(c.lifestyle || []).slice(0, 4)
+  ].filter(Boolean);
+  
+  const compatSection = compat.score ? `
+    <div style="background:var(--surface2,rgba(255,255,255,0.05));border-radius:12px;padding:1rem;margin:1rem 0;text-align:center;">
+      <div style="font-size:2rem;font-weight:700;color:var(--accent);">${compat.score}%</div>
+      <div style="font-size:0.75rem;color:var(--text3);font-family:var(--font-mono);letter-spacing:0.15em;">COMPATIBILITY · ${(compat.dynamic || 'resonance').toUpperCase()}</div>
+      ${compat.description ? `<div style="font-size:0.85rem;color:var(--text2);margin-top:0.5rem;font-style:italic;">"${compat.description}"</div>` : ''}
+    </div>` : '';
+  
+  const bioSection = c.bio ? `
+    <div style="margin:1rem 0;">
+      <div style="font-size:0.65rem;font-family:var(--font-mono);letter-spacing:0.2em;color:var(--accent);text-transform:uppercase;margin-bottom:0.4rem;">About</div>
+      <div style="font-size:0.9rem;color:var(--text1);line-height:1.6;">${c.bio}</div>
+    </div>` : '';
+    
+  const detailsSection = `
+    <div style="margin:1rem 0;">
+      <div style="font-size:0.65rem;font-family:var(--font-mono);letter-spacing:0.2em;color:var(--accent);text-transform:uppercase;margin-bottom:0.6rem;">Details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+        ${c.age ? `<div style="font-size:0.82rem;color:var(--text2);">🎂 Age ${c.age}</div>` : ''}
+        ${c.city ? `<div style="font-size:0.82rem;color:var(--text2);">📍 ${c.city}${c.country ? ', ' + c.country : ''}</div>` : ''}
+        ${c.profession ? `<div style="font-size:0.82rem;color:var(--text2);">💼 ${c.profession}</div>` : ''}
+        ${c.education ? `<div style="font-size:0.82rem;color:var(--text2);">🎓 ${c.education}</div>` : ''}
+        ${c.religion && c.religion !== 'none' ? `<div style="font-size:0.82rem;color:var(--text2);">✦ ${c.religion}</div>` : ''}
+        ${c.natal_type ? `<div style="font-size:0.82rem;color:var(--text2);">◈ ${c.natal_type} Type</div>` : ''}
+      </div>
+    </div>`;
+    
+  const tagsSection = tags.length ? `
+    <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin:1rem 0;">
+      ${tags.map(t => `<span style="background:var(--surface2,rgba(255,255,255,0.07));padding:0.3rem 0.7rem;border-radius:20px;font-size:0.75rem;color:var(--text2);">${t}</span>`).join('')}
+    </div>` : '';
+  
+  const body = `
+    <div style="text-align:center;">
+      ${photoHtml}
+      <div style="font-size:1.4rem;font-weight:600;color:var(--text1);margin-bottom:0.2rem;">${c.name || 'Match'}</div>
+      ${archetypeName ? `<div style="font-size:0.72rem;font-family:var(--font-mono);letter-spacing:0.2em;color:var(--accent);text-transform:uppercase;">${archetypeName}</div>` : ''}
+    </div>
+    ${compatSection}
+    ${bioSection}
+    ${detailsSection}
+    ${tagsSection}
+  `;
+  
+  showModal(c.name || 'Profile', body, [
+    { label: 'Close', class: 'btn btn-ghost', onclick: 'closeModal()' }
+  ]);
 }
 
 // ═══════════════════════════════════════════
@@ -1289,6 +1378,18 @@ function capitalize(str) {
 // ═══════════════════════════════════════════
 // INIT — CHECK EXISTING SESSION
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// OPEN TODAY'S MATCH FULL PROFILE
+// ═══════════════════════════════════════════════════════
+function openMatchFullProfile() {
+  if (!STATE.todayMatch) return;
+  const result = STATE.todayMatch;
+  const c = result.candidate || {};
+  const compat = result.match?.compatibility || result.compatibility || {};
+  const matchData = {candidate: c, compatibility: compat, status: result.match?.status, match_date: result.match?.match_date};
+  openCandidateProfile(encodeURIComponent(JSON.stringify(matchData)));
+}
+
 async function checkSession() {
   const result = await apiCall('/auth/me');
   if (result.authenticated) {

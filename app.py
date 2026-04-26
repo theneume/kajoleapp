@@ -632,7 +632,8 @@ def api_get_today_match():
     today_match_record = get_today_match(user_id)  # from db_layer
     if today_match_record:
         candidate_id = today_match_record.get('candidate_id')
-        candidate = get_user(candidate_id) or {}
+        # Use embedded candidate data first (for demo profiles), then fall back to DB
+        candidate = today_match_record.get('candidate') or get_user(candidate_id) or {}
         safe_candidate = _safe_profile(candidate)
         return jsonify({
             "has_match": True,
@@ -641,40 +642,61 @@ def api_get_today_match():
             "already_sent_hi": today_match_record.get('status') in ['hi_sent', 'conversation']
         })
 
-    # Generate new match
+    # Generate new match using matching engine
     result = engine.find_daily_match(user_id)
 
-    if not result:
+    if result:
+        candidate = result['candidate']
+        candidate_id = candidate['id']
+        compatibility = result['compatibility']
+
+        # Record the match via db_layer (include embedded candidate)
+        match_data = {
+            "user_id": user_id,
+            "candidate_id": candidate_id,
+            "candidate": candidate,  # embed candidate data
+            "match_date": today,
+            "compatibility": compatibility,
+            "compatibility_score": compatibility.get('score', 70),
+            "dynamic": compatibility.get('dynamic', 'Compatible'),
+            "status": "pending"
+        }
+        create_match(match_data)
+
+        # Get the saved match
+        today_match_record = get_today_match(user_id)  # from db_layer
+        safe_candidate = _safe_profile(candidate)
+
         return jsonify({
-            "has_match": False,
-            "message": "We're searching the universe for your perfect match. Check back soon.",
-            "next_match_at": (datetime.now() + timedelta(hours=2)).isoformat()
+            "has_match": True,
+            "match": today_match_record,
+            "candidate": safe_candidate,
+            "already_sent_hi": False
         })
 
-    candidate = result['candidate']
-    candidate_id = candidate['id']
-    compatibility = result['compatibility']
-
-    # Record the match via db_layer
-    match_data = {
-        "user_id": user_id,
-        "candidate_id": candidate_id,
-        "match_date": today,
-        "compatibility": compatibility,
-        "status": "pending"
-    }
-    create_match(match_data)
-
-    # Get the saved match
-    today_match_record = get_today_match(user_id)  # from db_layer
-
-    safe_candidate = _safe_profile(candidate)
+    # Fallback: use a seeded demo match if engine returned nothing
+    # Seed initial matches for this user if they have none
+    try:
+        all_matches = get_user_matches(user_id)
+        if not all_matches:
+            seed_initial_matches(user_id, num_matches=3)
+            # Try to get today's match again after seeding
+            today_match_record = get_today_match(user_id)
+            if today_match_record:
+                candidate = today_match_record.get('candidate') or {}
+                return jsonify({
+                    "has_match": True,
+                    "match": today_match_record,
+                    "candidate": _safe_profile(candidate),
+                    "already_sent_hi": False
+                })
+    except Exception as e:
+        print(f"Error in fallback match seeding: {e}")
 
     return jsonify({
-        "has_match": True,
-        "match": today_match_record,
-        "candidate": safe_candidate,
-        "already_sent_hi": False
+        "has_match": False,
+        "message": "We're searching the universe for your perfect match. Check back soon.",
+        "next_match_at": (datetime.now() + timedelta(hours=2)).isoformat()
     })
 
 

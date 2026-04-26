@@ -1783,9 +1783,12 @@ p { color: var(--text2); line-height: 1.75; }
   border: 1px solid var(--border2);
   border-radius: var(--radius-lg);
   padding: 2.5rem;
-  max-width: 480px;
+  max-width: 500px;
   width: 100%;
   box-shadow: var(--shadow);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-title {
@@ -1793,10 +1796,15 @@ p { color: var(--text2); line-height: 1.75; }
   font-size: 1.6rem;
   font-weight: 400;
   margin-bottom: 0.75rem;
+  flex-shrink: 0;
 }
 
-.modal-body { margin-bottom: 1.5rem; }
-.modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+.modal-body { 
+  margin-bottom: 1.5rem; 
+  overflow-y: auto;
+  flex: 1;
+}
+.modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; flex-shrink: 0; }
 
 /* ─────────────────────────────────────────────
    RESPONSIVE

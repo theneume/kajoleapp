@@ -951,14 +951,18 @@ def seed_initial_matches(user_id: str, num_matches: int = 3) -> int:
     user_loi = user.get('loi_score', 50)
     
     # Hardcoded attractive demo profiles (NO DB DEPENDENCY)
+    # Photos use UI Avatars - consistent colourful avatars with initials
+    def avatar(name, bg='C7956C'):
+        return f"https://ui-avatars.com/api/?name={name.replace(' ','+')}&background={bg}&color=fff&size=256&bold=true&rounded=true"
+    
     demo_profiles = [
-        {'id': 'demo_sophia', 'name': 'Sophia Chen', 'natal_type': 'SS', 'loi_score': 55, 'gender': 'female', 'age': 26, 'city': 'San Francisco', 'profession': 'UX Designer', 'bio': 'Designing delightful experiences by day, hunting for the best dumplings by night.'},
-        {'id': 'demo_marcus', 'name': 'Marcus Williams', 'natal_type': 'DD', 'loi_score': 71, 'gender': 'male', 'age': 32, 'city': 'Los Angeles', 'profession': 'Film Producer', 'bio': 'Stories are my life - whether producing them or living them.'},
-        {'id': 'demo_isabelle', 'name': 'Isabelle Moreau', 'natal_type': 'SD', 'loi_score': 58, 'gender': 'female', 'age': 27, 'city': 'Paris', 'profession': 'Art Curator', 'bio': 'Passionate about art, culture, and meaningful connections.'},
-        {'id': 'demo_jordan', 'name': 'Jordan Taylor', 'natal_type': 'DS', 'loi_score': 62, 'gender': 'male', 'age': 29, 'city': 'New York', 'profession': 'Architect', 'bio': 'Building spaces that inspire connection and wonder.'},
-        {'id': 'demo_amara', 'name': 'Amara Okonkwo', 'natal_type': 'DD', 'loi_score': 68, 'gender': 'female', 'age': 25, 'city': 'London', 'profession': 'Data Scientist', 'bio': 'Finding patterns in chaos, seeking meaning in moments.'},
-        {'id': 'demo_rafael', 'name': 'Rafael Santos', 'natal_type': 'SS', 'loi_score': 60, 'gender': 'male', 'age': 31, 'city': 'Miami', 'profession': 'Chef', 'bio': 'Creating flavors that tell stories and spark memories.'},
-        {'id': 'demo_nadia', 'name': 'Nadia Al-Hassan', 'natal_type': 'DD', 'loi_score': 73, 'gender': 'female', 'age': 28, 'city': 'Dubai', 'profession': 'Marketing Director', 'bio': 'Ambitious, cultured, and deeply curious about the world.'},
+        {'id': 'demo_sophia', 'name': 'Sophia Chen', 'natal_type': 'SS', 'loi_score': 55, 'gender': 'female', 'age': 26, 'city': 'San Francisco', 'country': 'USA', 'profession': 'UX Designer', 'bio': 'Designing delightful experiences by day, hunting for the best dumplings by night. Fluent in Figma, Mandarin, and sarcasm.', 'lifestyle': ['design', 'travel', 'food', 'yoga'], 'education': 'Stanford Design School', 'photos': [avatar('Sophia Chen', 'C7956C')]},
+        {'id': 'demo_marcus', 'name': 'Marcus Williams', 'natal_type': 'DD', 'loi_score': 71, 'gender': 'male', 'age': 32, 'city': 'Los Angeles', 'country': 'USA', 'profession': 'Film Producer', 'bio': 'Stories are my life - whether producing them or living them. Looking for someone who can sit in comfortable silence and also dance in the kitchen.', 'lifestyle': ['film', 'music', 'travel', 'boxing'], 'education': 'UCLA Film School', 'photos': [avatar('Marcus Williams', '4A6B8A')]},
+        {'id': 'demo_isabelle', 'name': 'Isabelle Moreau', 'natal_type': 'SD', 'loi_score': 58, 'gender': 'female', 'age': 27, 'city': 'Paris', 'country': 'France', 'profession': 'Art Curator', 'bio': 'Passionate about art, culture, and meaningful connections. I believe every person has a story worth hearing twice.', 'lifestyle': ['art', 'literature', 'wine', 'cycling'], 'education': 'École du Louvre', 'photos': [avatar('Isabelle Moreau', '8B6BA8')]},
+        {'id': 'demo_jordan', 'name': 'Jordan Taylor', 'natal_type': 'DS', 'loi_score': 62, 'gender': 'male', 'age': 29, 'city': 'New York', 'country': 'USA', 'profession': 'Architect', 'bio': 'Building spaces that inspire connection and wonder. Obsessed with sustainable design and finding the perfect espresso.', 'lifestyle': ['architecture', 'coffee', 'running', 'photography'], 'education': 'Columbia GSAPP', 'photos': [avatar('Jordan Taylor', '2E7D5A')]},
+        {'id': 'demo_amara', 'name': 'Amara Okonkwo', 'natal_type': 'DD', 'loi_score': 68, 'gender': 'female', 'age': 25, 'city': 'London', 'country': 'UK', 'profession': 'Data Scientist', 'bio': 'Finding patterns in chaos, seeking meaning in moments. By day I build ML models, by night I write poetry nobody asked for.', 'lifestyle': ['tech', 'poetry', 'dance', 'hiking'], 'education': 'Imperial College London', 'photos': [avatar('Amara Okonkwo', 'B85C38')]},
+        {'id': 'demo_rafael', 'name': 'Rafael Santos', 'natal_type': 'SS', 'loi_score': 60, 'gender': 'male', 'age': 31, 'city': 'Miami', 'country': 'USA', 'profession': 'Chef', 'bio': 'Creating flavors that tell stories and spark memories. My love language is feeding people. Fair warning: I will make you try everything.', 'lifestyle': ['cooking', 'surfing', 'music', 'travel'], 'education': 'Culinary Institute of America', 'photos': [avatar('Rafael Santos', '6B4226')]},
+        {'id': 'demo_nadia', 'name': 'Nadia Al-Hassan', 'natal_type': 'DD', 'loi_score': 73, 'gender': 'female', 'age': 28, 'city': 'Dubai', 'country': 'UAE', 'profession': 'Marketing Director', 'bio': 'Ambitious, cultured, and deeply curious about the world. Building brands and breaking glass ceilings, one campaign at a time.', 'lifestyle': ['marketing', 'fashion', 'travel', 'art'], 'education': 'LSE Business School', 'photos': [avatar('Nadia Al-Hassan', '5B3D8A')]},
     ]
     
     # Filter by gender/orientation
@@ -983,12 +987,18 @@ def seed_initial_matches(user_id: str, num_matches: int = 3) -> int:
         except:
             compat = {'score': random.randint(65, 85), 'dynamic': 'Compatible'}
         
+        # First match is TODAY's match, others are past matches
+        if i == 0:
+            match_date = today.isoformat()
+        else:
+            match_date = (today - timedelta(days=i)).isoformat()
+        
         match_data = {
             'id': f"match_{uuid.uuid4().hex[:12]}",
             'user_id': user_id,
             'candidate_id': demo['id'],
             'candidate': demo,  # EMBED the profile data so it displays correctly
-            'match_date': (today - timedelta(days=i+1)).isoformat(),
+            'match_date': match_date,
             'compatibility': compat,
             'compatibility_score': compat.get('score', 70),
             'dynamic': compat.get('dynamic', 'Compatible'),
