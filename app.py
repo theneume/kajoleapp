@@ -325,11 +325,12 @@ def login():
     user = get_user_by_email(email)
     
     # Verify password (plain text)
-    password_hash = user.get('password_hash', '')
     password_valid = False
-    if password_hash:
-        # Plain text comparison (bcrypt removed to fix deployment)
-        password_valid = password == password_hash
+    if user:
+        password_hash = user.get('password_hash', '')
+        if password_hash:
+            # Plain text comparison (bcrypt removed to fix deployment)
+            password_valid = password == password_hash
     
     if user and password_valid:
         uid = user.get('id')
@@ -393,8 +394,17 @@ def login():
                     "attractiveness_min": 7
                 }
             }
-            create_user(demo_data)
         session['user_id'] = demo_uid
+        session['session_version'] = SESSION_VERSION
+        session.permanent = True
+        # Seed initial matches for demo user if they have none
+        try:
+            existing = get_user_matches(demo_uid)
+            if not existing:
+                seed_initial_matches(demo_uid, num_matches=3)
+                print(f'Seeded initial matches for demo user')
+        except Exception as e:
+            print(f'Could not seed demo matches: {e}')
         return jsonify({
             "success": True,
             "user_id": demo_uid,
@@ -933,7 +943,8 @@ def match_history():
 
     for match in reversed(user_matches):
         cand_id = match.get('candidate_id')
-        candidate = get_user(cand_id) or {}
+        # Use embedded candidate data first (for demo profiles), then fall back to DB lookup
+        candidate = match.get('candidate') or get_user(cand_id) or {}
         result.append({
             "match_date": match.get('match_date'),
             "status": match.get('status', 'pending'),

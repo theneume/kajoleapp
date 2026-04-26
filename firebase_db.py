@@ -241,6 +241,8 @@ def create_match(match_data: Dict[str, Any]) -> Dict[str, Any]:
         'id': match_id,
         'user_id': match_data.get('user_id'),
         'candidate_id': match_data.get('candidate_id'),
+        'candidate': match_data.get('candidate', {}),  # STORE embedded candidate profile
+        'compatibility': match_data.get('compatibility', {}),  # STORE full compatibility dict
         'compatibility_score': match_data.get('compatibility_score', 0),
         'dynamic': match_data.get('dynamic', ''),
         'match_date': match_data.get('match_date', datetime.utcnow().strftime('%Y-%m-%d')),
