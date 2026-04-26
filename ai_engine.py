@@ -345,19 +345,84 @@ def _build_user_context_block(user_profile: dict, match_context: dict = None) ->
 # ═══════════════════════════════════════════════════════════════════════════════
 # VERTEX AI REST API CALL
 # system_instruction MUST be at ROOT LEVEL — this is the critical fix
-# ═══════════════════════════════════════════════════════════════════════════════
+
+# ════════════════════════════════════════════════════════════════════════════════
+# VERTEX AI REST API CALL
+# system_instruction MUST be at ROOT LEVEL — this is the critical fix
+# profile_header stamped on EVERY history turn — this fixes the stateless void
+# ════════════════════════════════════════════════════════════════════════════════
+
+def _build_compact_profile_header(user_profile: dict, match_context: dict = None) -> str:
+    """
+    Build a SHORT compact profile header to prepend to EVERY user turn in the
+    history array. This re-anchors Gemini to who it's talking to across ALL turns,
+    solving the stateless void problem where context was lost after turn 1.
+    """
+    if not user_profile:
+        return ""
+
+    name = user_profile.get('name', 'User')
+    natal_type = user_profile.get('natal_type', '')
+    loi = user_profile.get('loi_score', 50) or 50
+    gender = user_profile.get('gender', '').lower()
+    age = user_profile.get('age', '')
+
+    archetype_data = user_profile.get('archetype', {}) or {}
+    archetype_name = archetype_data.get('title') or archetype_data.get('name') or ''
+    if not archetype_name and natal_type:
+        gender_key = 'female' if ('female' in gender or 'woman' in gender) else 'male'
+        archetype_name = ARCHETYPE_MAP.get(natal_type, {}).get(gender_key, '')
+
+    loi_label = "high alignment" if loi >= 65 else "mid integration" if loi >= 45 else "early integration"
+
+    header_parts = [f"[USER: {name}"]
+    if age:
+        header_parts.append(f", {age}")
+    if archetype_name:
+        header_parts.append(f" | Archetype: {archetype_name}")
+    neuro = NEUROCHEMISTRY.get(natal_type, '')
+    if neuro:
+        header_parts.append(f" | {neuro}")
+    header_parts.append(f" | LOI: {loi}/100 ({loi_label})")
+
+    if match_context:
+        candidate = match_context.get('candidate', {}) or {}
+        c_type = candidate.get('natal_type', '')
+        c_gender = candidate.get('gender', '').lower()
+        c_key = 'female' if ('female' in c_gender or 'woman' in c_gender) else 'male'
+        c_arch_data = candidate.get('archetype', {}) or {}
+        c_arch_name = (
+            c_arch_data.get('title') or c_arch_data.get('name')
+            or ARCHETYPE_MAP.get(c_type, {}).get(c_key, '')
+        )
+        compat_note = _get_compat_data(natal_type, c_type) if natal_type and c_type else ""
+        if c_arch_name:
+            header_parts.append(f" | Today's match: {c_arch_name}")
+        if compat_note:
+            # Keep it short — just the first sentence
+            short_note = compat_note.split('.')[0] if compat_note else ""
+            if short_note:
+                header_parts.append(f" | Dynamic: {short_note}")
+
+    header_parts.append("]")
+    return "".join(header_parts)
+
 
 def get_gemini_via_rest(
     prompt: str,
     history: list = None,
     user_context: str = None,
-    system_override: str = None
+    system_override: str = None,
+    profile_header: str = None
 ) -> Optional[str]:
     """
     Call Gemini via Vertex AI REST API using service account OAuth2.
 
-    CRITICAL: system_instruction is at TOP LEVEL of payload — NOT embedded in
-    the user message. This is what makes Gemini adopt the Kajole persona.
+    CRITICAL ARCHITECTURE (3-layer context injection):
+    1. system_instruction at TOP LEVEL — persona enforcement (never inside contents)
+    2. profile_header prepended to EVERY user turn in history — stateful identity
+    3. Full user_context block injected into current turn — rich per-turn detail
+    4. frequencyPenalty + presencePenalty — eliminates repetition loops
     """
     import urllib.request
     import urllib.error
@@ -389,21 +454,39 @@ def get_gemini_via_rest(
         credentials.refresh(Request())
         token = credentials.token
 
-        # Build conversation history
+        # ═══════════════════════════════════════════════════════════════════
+        # BUILD CONTENTS ARRAY — STATEFUL CONTEXT INJECTION
+        #
+        # "Stateless Void" fix: prepend profile_header to EVERY user turn.
+        # Gemini sees who this person is on every single message exchange,
+        # not just the first turn. Without this, turn 2+ lose all context.
+        # ═══════════════════════════════════════════════════════════════════
         contents = []
+
         if history:
-            for msg in history[-12:]:
+            for msg in history[-10:]:   # last 5 exchanges (10 messages)
                 role = 'user' if msg.get('role') == 'user' else 'model'
                 content_text = msg.get('content', '')
-                if content_text:
-                    contents.append({
-                        'role': role,
-                        'parts': [{'text': content_text}]
-                    })
+                if not content_text:
+                    continue
 
-        # Build user turn — inject context block above the message
+                if role == 'user' and profile_header:
+                    # Stamp compact identity header on every historical user turn
+                    stamped = f"{profile_header}\n{content_text}"
+                else:
+                    stamped = content_text
+
+                contents.append({
+                    'role': role,
+                    'parts': [{'text': stamped}]
+                })
+
+        # Current user turn — inject FULL context block (rich RAG + profile detail)
+        # This gives Gemini complete context on the most recent message
         if user_context:
             full_prompt = f"{user_context}\n\n---\n\nUser message: {prompt}"
+        elif profile_header:
+            full_prompt = f"{profile_header}\n{prompt}"
         else:
             full_prompt = prompt
 
@@ -414,11 +497,9 @@ def get_gemini_via_rest(
 
         system_text = system_override or KAJOLE_SYSTEM_INSTRUCTION
 
-        # ═══════════════════════════════════════════════════════
-        # CRITICAL FIX: system_instruction at TOP LEVEL
-        # If this is nested inside contents, Gemini ignores it
-        # and falls back to generic assistant behavior
-        # ═══════════════════════════════════════════════════════
+        # ═══════════════════════════════════════════════════════════════════
+        # PAYLOAD — system_instruction at ROOT, penalties stop repetition
+        # ═══════════════════════════════════════════════════════════════════
         payload = {
             'system_instruction': {
                 'parts': [{'text': system_text}]
@@ -429,6 +510,8 @@ def get_gemini_via_rest(
                 'topP': 0.95,
                 'maxOutputTokens': 800,
                 'candidateCount': 1,
+                'frequencyPenalty': 0.4,   # Kills token-level repetition loops
+                'presencePenalty': 0.3,    # Forces new angles each turn
             },
             'safetySettings': [
                 {'category': 'HARM_CATEGORY_HARASSMENT',        'threshold': 'BLOCK_ONLY_HIGH'},
@@ -467,7 +550,8 @@ def get_gemini_via_rest(
                     print(f"Vertex AI response: {len(text)} chars", flush=True)
                     return text
 
-        print(f"Vertex AI returned no text. Finish reason: {candidates[0].get('finishReason', 'unknown') if candidates else 'no candidates'}")
+        finish = candidates[0].get('finishReason', 'unknown') if candidates else 'no candidates'
+        print(f"Vertex AI returned no text. Finish reason: {finish}")
         return None
 
     except ImportError:
@@ -480,7 +564,6 @@ def get_gemini_via_rest(
         print(f"Vertex AI REST error: {e}")
         traceback.print_exc()
         return None
-
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MAIN CHAT FUNCTION
@@ -495,12 +578,19 @@ def chat_with_kajole(
     """
     Main Kajole chat function. Builds rich RAG context and calls Vertex AI.
     """
+    # Build rich context block (full RAG + profile detail) for current turn
     context_block = _build_user_context_block(user_profile, match_context)
+
+    # Build compact profile header to stamp on EVERY history turn
+    # This is the "stateless void" fix — Gemini re-reads who this person is
+    # on every single exchange, not just the first message
+    profile_header = _build_compact_profile_header(user_profile, match_context)
 
     response = get_gemini_via_rest(
         prompt=user_message,
         history=conversation_history,
-        user_context=context_block if context_block else None
+        user_context=context_block if context_block else None,
+        profile_header=profile_header if profile_header else None
     )
 
     if response:
