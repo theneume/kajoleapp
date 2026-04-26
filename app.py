@@ -7,6 +7,7 @@ import json
 import os
 import random
 import uuid
+import sys
 # No bcrypt - using plain text password for now
 from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, jsonify, session
@@ -56,6 +57,20 @@ def validate_session():
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
+@app.route('/api/health')
+def health():
+    """Health check - shows app status and Firebase connection"""
+    import sys
+    db_status = get_db_status()
+    return jsonify({
+        "status": "ok",
+        "db": db_status,
+        "session_version": SESSION_VERSION,
+        "timestamp": datetime.now().isoformat(),
+        "python": sys.version
+    })
+
+
 # ─────────────────────────────────────────────
 # IN-MEMORY DATABASES (Firebase-ready structure)
 # ─────────────────────────────────────────────
@@ -80,9 +95,13 @@ engine = MatchingEngine(USERS_DB, MATCHES_DB)
 # ─────────────────────────────────────────────
 # seed_demo_profiles is now imported from db_layer
 # Call it on app startup to ensure demo profiles exist
-print("🔄 Seeding demo profiles on startup...")
-seed_demo_profiles()
-print("✅ Demo profiles seeded")
+print("🔄 Seeding demo profiles on startup...", flush=True)
+try:
+    seed_demo_profiles()
+    print("✅ Demo profiles seeded", flush=True)
+except Exception as e:
+    print(f"❌ Demo seed error: {e}", flush=True)
+    import traceback; traceback.print_exc()
 # ─────────────────────────────────────────────
 # GEMINI AI HELPER
 # ─────────────────────────────────────────────
