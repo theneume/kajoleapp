@@ -7,12 +7,7 @@ import json
 import os
 import random
 import uuid
-try:
-    import bcrypt
-    BCRYPT_AVAILABLE = True
-except ImportError:
-    BCRYPT_AVAILABLE = False
-    print("WARNING: bcrypt not available - demo login may not work")
+# No bcrypt - using plain text password for now
 from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, jsonify, session
 from natal_calculator import calculate_natal_type_from_dob, get_archetype, get_loi_score
@@ -299,22 +294,12 @@ def login():
     # Use db_layer to find user by email (checks Firebase first)
     user = get_user_by_email(email)
     
-    # Verify password (supports bcrypt and plain text)
+    # Verify password (plain text)
     password_hash = user.get('password_hash', '')
     password_valid = False
     if password_hash:
-        if password_hash.startswith('$2'):
-            # Bcrypt hash
-            try:
-                if BCRYPT_AVAILABLE:
-                    password_valid = bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
-                else:
-                    password_valid = False
-            except:
-                password_valid = False
-        else:
-            # Plain text (legacy)
-            password_valid = password == password_hash
+        # Plain text comparison (bcrypt removed to fix deployment)
+        password_valid = password == password_hash
     
     if user and password_valid:
         uid = user.get('id')

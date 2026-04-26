@@ -464,11 +464,7 @@ def delete_session(token: str) -> bool:
 def seed_demo_profiles():
     """Seed demo profiles for testing with photos and complete profiles."""
     # Demo password hash for "DemoPass123!" (bcrypt)
-    try:
-        import bcrypt
-        demo_password_hash = bcrypt.hashpw('DemoPass123!'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    except ImportError:
-        demo_password_hash = 'DemoPass123!'  # Plain text fallback
+    demo_password_hash = 'DemoPass123!'  # Plain text password
     
     demo_profiles = [
         {
