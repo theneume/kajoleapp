@@ -95,13 +95,14 @@ engine = MatchingEngine(USERS_DB, MATCHES_DB)
 # ─────────────────────────────────────────────
 # seed_demo_profiles is now imported from db_layer
 # Call it on app startup to ensure demo profiles exist
-print("🔄 Seeding demo profiles on startup...", flush=True)
+import sys
+print("🔄 KAJOLE STARTUP: Seeding demo profiles...", file=sys.stderr, flush=True)
 try:
     seed_demo_profiles()
-    print("✅ Demo profiles seeded", flush=True)
+    print("✅ KAJOLE STARTUP: Demo profiles seeded", file=sys.stderr, flush=True)
 except Exception as e:
-    print(f"❌ Demo seed error: {e}", flush=True)
-    import traceback; traceback.print_exc()
+    print(f"❌ KAJOLE STARTUP ERROR: {e}", file=sys.stderr, flush=True)
+    import traceback; traceback.print_exc(file=sys.stderr)
 # ─────────────────────────────────────────────
 # GEMINI AI HELPER
 # ─────────────────────────────────────────────
