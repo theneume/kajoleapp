@@ -64,6 +64,17 @@ def validate_session():
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
+# ─────────────────────────────────────────────────────────────────────
+# AI ENGINE — Gemini 2.5 Flash via Vertex AI (service account auth)
+# ─────────────────────────────────────────────────────────────────────
+try:
+    from ai_engine import chat_with_kajole, get_match_insight, get_gemini_via_rest, extract_match_specs_from_message
+    AI_ENGINE_AVAILABLE = True
+    print("✅ AI Engine (Vertex AI) loaded successfully", file=sys.stderr, flush=True)
+except Exception as _ai_err:
+    AI_ENGINE_AVAILABLE = False
+    print(f"⚠️  AI Engine not available: {_ai_err}", file=sys.stderr, flush=True)
+
 @app.route('/api/health')
 def health():
     """Health check - shows app status and Firebase connection"""
@@ -114,52 +125,52 @@ except Exception as e:
     print(f"❌ KAJOLE STARTUP ERROR: {e}", file=sys.stderr, flush=True)
     import traceback; traceback.print_exc(file=sys.stderr)
 # ─────────────────────────────────────────────
-# GEMINI AI HELPER
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────
+# GEMINI AI HELPER — routes through ai_engine (Vertex AI) or falls
+# back to direct Gemini API key if ai_engine is unavailable
+# ─────────────────────────────────────────────────────────────────────
 def call_gemini(system_prompt: str, user_message: str, history: list = None) -> str:
-    """Call Gemini API with system prompt and message."""
-    if not GEMINI_API_KEY:
-        return _fallback_response(user_message)
+    """Call Gemini — prefers Vertex AI (ai_engine) over raw API key."""
+    # Try Vertex AI first via ai_engine
+    if AI_ENGINE_AVAILABLE:
+        try:
+            result = get_gemini_via_rest(
+                prompt=f"[SYSTEM]\n{system_prompt}\n\n[USER]\n{user_message}",
+                history=history,
+                user_context=None
+            )
+            if result:
+                return result
+        except Exception as e:
+            print(f"ai_engine call_gemini fallback: {e}", file=sys.stderr)
 
-    headers = {"Content-Type": "application/json"}
-    
-    contents = []
-    if history:
-        for msg in history[-6:]:  # last 6 messages for context
-            contents.append({
-                "role": msg['role'],
-                "parts": [{"text": msg['content']}]
-            })
-    
-    contents.append({
-        "role": "user",
-        "parts": [{"text": user_message}]
-    })
-
-    payload = {
-        "system_instruction": {
-            "parts": [{"text": system_prompt}]
-        },
-        "contents": contents,
-        "generationConfig": {
-            "temperature": 0.85,
-            "maxOutputTokens": 600,
-            "topP": 0.9
+    # Legacy: try raw Gemini API key
+    if GEMINI_API_KEY:
+        headers = {"Content-Type": "application/json"}
+        contents = []
+        if history:
+            for msg in history[-6:]:
+                contents.append({
+                    "role": msg['role'],
+                    "parts": [{"text": msg['content']}]
+                })
+        contents.append({"role": "user", "parts": [{"text": user_message}]})
+        payload = {
+            "system_instruction": {"parts": [{"text": system_prompt}]},
+            "contents": contents,
+            "generationConfig": {"temperature": 0.85, "maxOutputTokens": 600, "topP": 0.9}
         }
-    }
+        try:
+            resp = requests.post(
+                f"{GEMINI_URL}?key={GEMINI_API_KEY}",
+                headers=headers, json=payload, timeout=15
+            )
+            data = resp.json()
+            return data['candidates'][0]['content']['parts'][0]['text']
+        except Exception as e:
+            print(f"Gemini API key error: {e}")
 
-    try:
-        resp = requests.post(
-            f"{GEMINI_URL}?key={GEMINI_API_KEY}",
-            headers=headers,
-            json=payload,
-            timeout=15
-        )
-        data = resp.json()
-        return data['candidates'][0]['content']['parts'][0]['text']
-    except Exception as e:
-        print(f"Gemini error: {e}")
-        return _fallback_response(user_message)
+    return _fallback_response(user_message)
 
 
 def _fallback_response(message: str) -> str:
@@ -831,7 +842,7 @@ def api_send_message(conv_id):
 # ─────────────────────────────────────────────
 @app.route('/api/ai/chat', methods=['POST'])
 def ai_chat():
-    """AI companion chat — processes feedback and gives coaching."""
+    """AI companion chat — powered by Kajole Deepsyke engine (Gemini via Vertex AI)."""
     user_id = get_current_user_id()
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
@@ -847,55 +858,74 @@ def ai_chat():
     if not user_message:
         return jsonify({"error": "Message required"}), 400
 
-    # Process feedback if it mentions a match
-    feedback_keywords = ['boring', 'exciting', 'liked', 'didn\'t like', 'too', 'not enough',
+    # Silently extract match specs from conversation (Adaptive Matching)
+    if AI_ENGINE_AVAILABLE:
+        try:
+            specs = extract_match_specs_from_message(user_message, user)
+            if specs:
+                existing = user.get('match_specs', {}) or {}
+                existing.update(specs)
+                update_user(user_id, {'match_specs': existing})
+        except Exception as e:
+            print(f"match spec extraction error: {e}", file=sys.stderr)
+
+    # Process feedback if it mentions a match (legacy engine integration)
+    feedback_keywords = ['boring', 'exciting', 'liked', "didn't like", 'too', 'not enough',
                          'attractive', 'ugly', 'interesting', 'dull', 'next', 'more', 'less']
     is_feedback = any(kw in user_message.lower() for kw in feedback_keywords)
-
     if is_feedback and last_candidate_id:
-        adjustments = engine.process_ai_feedback(user_id, user_message, last_candidate_id)
-        if adjustments:
-            update_user(user_id, {'ai_feedback_adjustments': adjustments})
+        try:
+            adjustments = engine.process_ai_feedback(user_id, user_message, last_candidate_id)
+            if adjustments:
+                update_user(user_id, {'ai_feedback_adjustments': adjustments})
+        except Exception:
+            pass
 
-    # Get last match for context
+    # Get last match for context (use embedded candidate if available)
     user_matches = get_user_matches(user_id)
     last_match_record = user_matches[-1] if user_matches else None
-    last_match_with_candidate = None
+    match_context = None
     if last_match_record:
-        cand_id = last_match_record.get('candidate_id')
-        candidate = get_user(cand_id) or {}
-        last_match_with_candidate = {
+        # Prefer embedded candidate data (works for demo profiles too)
+        candidate = last_match_record.get('candidate') or get_user(last_match_record.get('candidate_id', '')) or {}
+        match_context = {
             "candidate": candidate,
             "compatibility": last_match_record.get('compatibility', {})
         }
 
-    # Build system prompt
-    system_prompt = build_ai_coach_prompt(user, last_match_with_candidate)
-
     # Get conversation history
     history = user.get('ai_conversation', [])
 
-    # Call Gemini
-    response = call_gemini(system_prompt, user_message, history)
+    # Call AI engine (Vertex AI Gemini) or fall back gracefully
+    if AI_ENGINE_AVAILABLE:
+        response = chat_with_kajole(
+            user_message=user_message,
+            conversation_history=history,
+            user_profile=user,
+            match_context=match_context
+        )
+    else:
+        system_prompt = build_ai_coach_prompt(user, match_context)
+        response = call_gemini(system_prompt, user_message, history)
 
-    # Save conversation via db_layer
+    # Save conversation (keep last 20 messages)
     new_conversation = (user.get('ai_conversation', []) or []) + [
         {"role": "user", "content": user_message},
         {"role": "model", "content": response}
     ]
-    # Keep only last 20 messages
     update_user(user_id, {'ai_conversation': new_conversation[-20:]})
 
     return jsonify({
         "response": response,
         "feedback_processed": is_feedback,
-        "adjustments_applied": bool(is_feedback and last_candidate_id)
+        "adjustments_applied": bool(is_feedback and last_candidate_id),
+        "ai_engine": AI_ENGINE_AVAILABLE
     })
 
 
 @app.route('/api/ai/match_insight', methods=['POST'])
 def match_insight():
-    """Get AI insight about today's match."""
+    """Get AI insight about today's match — powered by Deepsyke engine."""
     user_id = get_current_user_id()
     if not user_id:
         return jsonify({"error": "Not authenticated"}), 401
@@ -903,55 +933,62 @@ def match_insight():
     user = get_current_user()
     data = request.json
     candidate_id = data.get('candidate_id')
-    candidate = USERS_DB.get(candidate_id, {})
+
+    # Try to get candidate from embedded match data first, then from DB
+    candidate = None
+    if candidate_id:
+        # Check today's match for embedded candidate data
+        user_matches = get_user_matches(user_id)
+        for m in user_matches:
+            if m.get('candidate_id') == candidate_id:
+                candidate = m.get('candidate') or {}
+                break
+        if not candidate:
+            candidate = get_user(candidate_id) or USERS_DB.get(candidate_id, {})
 
     if not candidate:
         return jsonify({"error": "Candidate not found"}), 404
 
-    user_type = user.get('natal_type', 'SD')
-    cand_type = candidate.get('natal_type', 'SD')
-    user_loi = user.get('loi_score', 50)
-    cand_loi = candidate.get('loi_score', 50)
-
-    compat = get_compatibility_dynamic(user_type, cand_type, user_loi, cand_loi)
-
-    # Type translations (hidden hand principle)
-    type_translations = {
-        "SS": "soulful depth",
-        "SD": "grounded warmth",
-        "DS": "creative spark",
-        "DD": "bold fire"
-    }
-
-    user_essence = type_translations.get(user_type, "unique energy")
-    cand_essence = type_translations.get(cand_type, "distinctive rhythm")
-
-    system_prompt = f"""You are Kajole's AI match insight generator. Write a poetic, intriguing, psychologically rich insight about why these two people have been matched today.
+    # Use ai_engine for rich Deepsyke insight
+    if AI_ENGINE_AVAILABLE:
+        insight = get_match_insight(user, candidate)
+    else:
+        # Legacy fallback using call_gemini
+        user_type = user.get('natal_type', 'SD')
+        cand_type = candidate.get('natal_type', 'SD')
+        user_loi = user.get('loi_score', 50)
+        cand_loi = candidate.get('loi_score', 50)
+        compat = get_compatibility_dynamic(user_type, cand_type, user_loi, cand_loi)
+        type_translations = {
+            "SS": "soulful depth", "SD": "grounded warmth",
+            "DS": "creative spark", "DD": "bold fire"
+        }
+        user_essence = type_translations.get(user_type, "unique energy")
+        cand_essence = type_translations.get(cand_type, "distinctive rhythm")
+        system_prompt = f"""You are Kajole's AI match insight generator. Write a poetic, intriguing insight about why these two people have been matched today.
 
 User energy: {user_essence} | Candidate energy: {cand_essence}
-Compatibility dynamic: {compat['dynamic']} ({compat['score']}% alignment)
-Is this an affinity match (same energy): {compat['affinity']}
-Is this a polarity match (opposite energies): {compat['is_opposite']}
+Compatibility: {compat['dynamic']} ({compat['score']}% alignment)
 
-Write 2-3 sentences that:
-1. Describe the energetic dynamic between them in poetic, non-clinical language
-2. Hint at what they might learn from each other or offer each other
-3. Create intrigue and curiosity — make the user WANT to say Hi
+Write 2-3 sentences that create intrigue and curiosity. Under 80 words. No clichés."""
+        insight = call_gemini(system_prompt, f"Generate insight for {user.get('name', 'our user')} meeting {candidate.get('name', 'their match')} today.")
 
-Keep it under 80 words. No clichés. No "soulmate" language. Sophisticated, magnetic, real."""
-
-    insight_prompt = f"Generate the match insight for {user.get('name', 'our user')} meeting {candidate.get('name', 'their match')} today."
-    insight = call_gemini(system_prompt, insight_prompt)
+    # Build compatibility data for response
+    user_type = user.get('natal_type', 'SD')
+    cand_type = candidate.get('natal_type', 'DS')
+    user_loi = user.get('loi_score', 50)
+    cand_loi = candidate.get('loi_score', 50)
+    compat = get_compatibility_dynamic(user_type, cand_type, user_loi, cand_loi)
 
     return jsonify({
         "insight": insight,
         "compatibility": compat,
         "dynamic_name": compat['dynamic'],
-        "score": compat['score']
+        "score": compat['score'],
+        "ai_engine": AI_ENGINE_AVAILABLE
     })
 
 
-# ─────────────────────────────────────────────
 # ROUTES — MATCH HISTORY & INBOX
 # ─────────────────────────────────────────────
 @app.route('/api/matches/history', methods=['GET'])
