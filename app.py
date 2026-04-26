@@ -7,7 +7,12 @@ import json
 import os
 import random
 import uuid
-import bcrypt
+try:
+    import bcrypt
+    BCRYPT_AVAILABLE = True
+except ImportError:
+    BCRYPT_AVAILABLE = False
+    print("WARNING: bcrypt not available - demo login may not work")
 from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, jsonify, session
 from natal_calculator import calculate_natal_type_from_dob, get_archetype, get_loi_score
@@ -301,7 +306,10 @@ def login():
         if password_hash.startswith('$2'):
             # Bcrypt hash
             try:
-                password_valid = bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
+                if BCRYPT_AVAILABLE:
+                    password_valid = bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
+                else:
+                    password_valid = False
             except:
                 password_valid = False
         else:
