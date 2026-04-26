@@ -69,12 +69,15 @@ def health():
     """Health check - shows app status and Firebase connection"""
     import sys
     db_status = get_db_status()
+    # Show which Firebase-related env vars exist (names only, not values)
+    firebase_env_vars = [k for k in os.environ if any(x in k.upper() for x in ['FIREBASE', 'GOOGLE', 'GCP', 'CREDENTIAL', 'SECRET'])]
     return jsonify({
         "status": "ok",
         "db": db_status,
         "session_version": SESSION_VERSION,
         "timestamp": datetime.now().isoformat(),
-        "python": sys.version
+        "python": sys.version,
+        "env_vars_present": sorted(firebase_env_vars)
     })
 
 

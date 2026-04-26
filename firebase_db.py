@@ -25,8 +25,29 @@ def init_firebase():
         return _firebase_app
     
     try:
-        # Try to get credentials from multiple sources
-        cred_json = os.environ.get("FIREBASE_CREDENTIALS_JSON") or os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
+        # DEBUG: Print ALL environment variables that might be Firebase-related
+        import sys
+        print("FIREBASE ENV VAR SEARCH:", file=sys.stderr, flush=True)
+        firebase_related = []
+        for key in os.environ:
+            if any(x in key.upper() for x in ['FIREBASE', 'GOOGLE', 'GCP', 'CREDENTIAL', 'SERVICE_ACCOUNT']):
+                val_preview = os.environ[key][:30] + '...' if len(os.environ[key]) > 30 else os.environ[key]
+                firebase_related.append(key)
+                print(f"  ENV: {key} = {val_preview}", file=sys.stderr, flush=True)
+        if not firebase_related:
+            print("  WARNING: NO Firebase-related env vars found!", file=sys.stderr, flush=True)
+        sys.stderr.flush()
+
+        # Try to get credentials from ALL possible env var names
+        cred_json = (
+            os.environ.get("FIREBASE_CREDENTIALS_JSON") or
+            os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON") or
+            os.environ.get("FIREBASE_SERVICE_ACCOUNT") or
+            os.environ.get("FIREBASE_ADMIN_SDK_JSON") or
+            os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or
+            os.environ.get("GCP_CREDENTIALS") or
+            os.environ.get("FIREBASE_CONFIG")
+        )
         cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
         
         # Get storage bucket from env or use default
@@ -37,7 +58,7 @@ def init_firebase():
         
         if cred_json:
             # Credentials provided as JSON string
-            print("📦 Found FIREBASE_CREDENTIALS_JSON environment variable")
+            print("Found Firebase credentials in environment variable", file=sys.stderr, flush=True)
             cred_dict = json.loads(cred_json)
             # CRITICAL: Render env vars store \n as literal backslash-n, fix it
             if 'private_key' in cred_dict:
