@@ -26,7 +26,7 @@ def init_firebase():
     
     try:
         # Try to get credentials from multiple sources
-        cred_json = os.environ.get("FIREBASE_CREDENTIALS_JSON")
+        cred_json = os.environ.get("FIREBASE_CREDENTIALS_JSON") or os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
         cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
         
         # Get storage bucket from env or use default
@@ -39,6 +39,9 @@ def init_firebase():
             # Credentials provided as JSON string
             print("📦 Found FIREBASE_CREDENTIALS_JSON environment variable")
             cred_dict = json.loads(cred_json)
+            # CRITICAL: Render env vars store \n as literal backslash-n, fix it
+            if 'private_key' in cred_dict:
+                cred_dict['private_key'] = cred_dict['private_key'].replace('\\n', '\n')
             cred = credentials.Certificate(cred_dict)
         elif cred_path and os.path.exists(cred_path):
             # Credentials from environment path
