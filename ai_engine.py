@@ -453,6 +453,7 @@ def get_gemini_via_rest(
         )
         credentials.refresh(Request())
         token = credentials.token
+        print(f'KAJOLE AI: Auth OK — project={project_id}, token_len={len(token)}', flush=True)
 
         # ═══════════════════════════════════════════════════════════════════
         # BUILD CONTENTS ARRAY — STATEFUL CONTEXT INJECTION
@@ -506,12 +507,12 @@ def get_gemini_via_rest(
             },
             'contents': contents,
             'generationConfig': {
-                'temperature': 0.88,
+                'temperature': 0.9,
                 'topP': 0.95,
-                'maxOutputTokens': 800,
+                'maxOutputTokens': 1024,
                 'candidateCount': 1,
-                'frequencyPenalty': 0.4,   # Kills token-level repetition loops
-                'presencePenalty': 0.3,    # Forces new angles each turn
+                'frequencyPenalty': 0.15,
+                'presencePenalty': 0.1,
             },
             'safetySettings': [
                 {'category': 'HARM_CATEGORY_HARASSMENT',        'threshold': 'BLOCK_ONLY_HIGH'},
@@ -522,8 +523,8 @@ def get_gemini_via_rest(
         }
 
         url = (
-            f"https://us-central1-aiplatform.googleapis.com/v1/projects/{project_id}"
-            f"/locations/us-central1/publishers/google/models/gemini-2.0-flash-001:generateContent"
+            f"https://australia-southeast1-aiplatform.googleapis.com/v1/projects/{project_id}"
+            f"/locations/australia-southeast1/publishers/google/models/gemini-2.5-flash:generateContent"
         )
 
         data = json.dumps(payload).encode('utf-8')
@@ -537,7 +538,9 @@ def get_gemini_via_rest(
             method='POST'
         )
 
-        with urllib.request.urlopen(req, timeout=30) as response:
+        print(f'KAJOLE AI: Calling Vertex AI -> {url}', flush=True)
+        print(f'KAJOLE AI: contents turns={len(contents)}, payload_size={len(json.dumps(payload))} bytes', flush=True)
+        with urllib.request.urlopen(req, timeout=45) as response:
             result = json.loads(response.read().decode('utf-8'))
 
         candidates = result.get('candidates', [])
@@ -555,14 +558,23 @@ def get_gemini_via_rest(
         return None
 
     except ImportError:
-        print("google-auth not installed — Vertex AI unavailable")
+        print('KAJOLE AI ERROR: google-auth not installed — Vertex AI unavailable')
         return None
     except json.JSONDecodeError as e:
-        print(f"Credential JSON parse error: {e}")
+        print(f'KAJOLE AI ERROR: Credential JSON parse error: {e}')
         return None
     except Exception as e:
-        print(f"Vertex AI REST error: {e}")
-        traceback.print_exc()
+        # Capture HTTP error body for diagnosis
+        import urllib.error as _ue
+        if isinstance(e, _ue.HTTPError):
+            try:
+                body = e.read().decode('utf-8')
+                print(f'KAJOLE AI HTTP {e.code} ERROR: {body[:800]}', flush=True)
+            except Exception:
+                print(f'KAJOLE AI HTTP {e.code} ERROR (body unreadable)', flush=True)
+        else:
+            print(f'KAJOLE AI REST ERROR: {type(e).__name__}: {e}', flush=True)
+            traceback.print_exc()
         return None
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -684,6 +696,7 @@ def _get_fallback_response(
     match_context: dict = None
 ) -> str:
     """Intelligent context-aware fallback — uses profile and RAG data."""
+    print(f'KAJOLE AI FALLBACK: Vertex AI unavailable, using fallback for: {user_message[:60]!r}', flush=True)
     msg_lower = user_message.lower()
 
     archetype_name = ""
