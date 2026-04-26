@@ -1101,6 +1101,61 @@ def get_photos():
     return jsonify({"photos": photos})
 
 
+
+@app.route('/api/admin/seed-demo', methods=['GET', 'POST'])
+def seed_demo_endpoint():
+    """Admin endpoint to seed demo matches - call this after deploy to fix empty matches"""
+    results = {}
+    
+    # Seed demo profiles
+    try:
+        seed_demo_profiles()
+        results['demo_profiles'] = 'seeded'
+    except Exception as e:
+        results['demo_profiles_error'] = str(e)
+    
+    # Seed matches for demo user
+    try:
+        demo_user = get_user('demo_user_main')
+        if not demo_user:
+            # Create demo user first
+            from natal_calculator import get_archetype
+            demo_data = {
+                "id": "demo_user_main",
+                "email": "demo@kajole.com",
+                "password_hash": "demo",
+                "name": "Alex",
+                "gender": "male",
+                "age": 30,
+                "dob": "1994-07-15",
+                "city": "London",
+                "country": "UK",
+                "orientation": "straight",
+                "natal_type": "DS",
+                "archetype": get_archetype("DS", "male"),
+                "loi_score": 62,
+                "bio": "A soul at the crossroads of creativity and ambition.",
+                "profession": "Product Designer",
+                "profile_complete": True,
+                "active": True,
+                "onboarding_step": 4,
+            }
+            create_user(demo_data)
+            results['demo_user'] = 'created'
+        else:
+            results['demo_user'] = 'already exists'
+        
+        # Clear existing matches and re-seed
+        n = seed_initial_matches('demo_user_main', num_matches=3)
+        results['demo_matches_seeded'] = n
+    except Exception as e:
+        results['demo_matches_error'] = str(e)
+        import traceback
+        results['traceback'] = traceback.format_exc()
+    
+    return jsonify({"status": "done", "results": results})
+
+
 if __name__ == '__main__':
     seed_demo_profiles()
     print("🔥 Kajole is running at http://0.0.0.0:5002")
