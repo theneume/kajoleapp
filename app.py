@@ -3,6 +3,13 @@ Kajole — The Slow Burn Dating App
 Powered by Deepsyke Psychology & Gemini AI
 """
 
+# CRITICAL: Debug startup BEFORE any imports
+import sys
+print("=" * 60, file=sys.stderr, flush=True)
+print("KAJOLE APP.PY - STARTING IMPORT", file=sys.stderr, flush=True)
+print("=" * 60, file=sys.stderr, flush=True)
+sys.stderr.flush()
+
 import json
 import os
 import random
