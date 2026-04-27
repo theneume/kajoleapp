@@ -908,6 +908,17 @@ def ai_chat():
         system_prompt = build_ai_coach_prompt(user, match_context)
         response = call_gemini(system_prompt, user_message, history)
 
+    # If AI returned None (Vertex AI error), serve a warm fallback
+    if not response:
+        print("KAJOLE AI FALLBACK: Vertex AI returned None — using local fallback", flush=True)
+        name = user.get("name", "").split()[0] if user.get("name") else ""
+        greeting = f"Hey {name}" if name else "Hey"
+        response = (
+            f"{greeting} — I'm here and thinking about what you said. "
+            "Give me just a moment and try again. Sometimes the connection "
+            "takes a beat to warm up. I'm not going anywhere."
+        )
+
     # Save conversation (keep last 20 messages)
     new_conversation = (user.get('ai_conversation', []) or []) + [
         {"role": "user", "content": user_message},
