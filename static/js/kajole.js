@@ -449,7 +449,7 @@ function renderArchetypeReveal(data) {
   const loi = data.loi_score || 50;
 
   const archetypeEmojis = {
-    Magician: '🔮', Mystic: '🌙', Knight: '⚔️', Maiden: '🌸',
+    Magician: '✦', Mystic: '🌙', Knight: '⚔️', Maiden: '🌸',
     Warrior: '🔥', Queen: '👑', King: '♛', Huntress: '🏹'
   };
 
@@ -686,7 +686,14 @@ function renderMatchCard(candidate, matchRecord, alreadySentHi) {
 
   const hiButton = alreadySentHi
     ? `<button class="btn btn-surface" disabled>✓ Hi Sent</button>`
-    : `<button class="btn btn-primary" onclick="sendHi('${candidate.id}')">Say Hi 👋</button>`;
+    : `<button class="btn btn-primary" onclick="sendHi('${candidate.id}')">Say Hi</button>`;
+
+  const messageButton = alreadySentHi
+    ? `<button class="btn btn-primary btn-message" onclick="openDirectMessage('${candidate.id}')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        Message
+      </button>`
+    : '';
 
   return `
     <div class="match-card">
@@ -730,9 +737,10 @@ function renderMatchCard(candidate, matchRecord, alreadySentHi) {
         </div>
 
         <div class="match-actions">
-          ${hiButton}
-          <button class="btn btn-ghost" onclick="switchView('ai')">Ask AI about this match</button>
-          <button class="btn btn-ghost" onclick="openMatchFullProfile()">View Full Profile</button>
+            ${hiButton}
+            ${messageButton}
+            <button class=\"btn btn-ghost\" onclick=\"switchView('ai')\">Ask AI about this match</button>
+            <button class=\"btn btn-ghost\" onclick=\"openMatchFullProfile()\">View Full Profile</button>
         </div>
       </div>
     </div>
@@ -767,7 +775,7 @@ function renderWaitingState(data) {
         </div>
       </div>
 
-      <button class="btn btn-surface" onclick="switchView('ai')">🤖 Talk to my AI companion</button>
+      <button class="btn btn-surface" onclick="switchView('ai')">✦ Talk to my AI companion</button>
     </div>
   `;
 }
@@ -828,6 +836,32 @@ async function sendHi(candidateId) {
   setTimeout(() => switchView('inbox'), 1500);
 }
 
+// ═══════════════════════════════════════════════════════
+// DIRECT MESSAGE — open conversation from match card
+// ═══════════════════════════════════════════════════════
+async function openDirectMessage(candidateId) {
+  const userId = STATE.user?.id;
+  if (!userId) return;
+
+  // Build conv_id same way the server does: userId_candidateId
+  const convId = `${userId}_${candidateId}`;
+
+  // Get candidate data from current state
+  const candidate = STATE.todayMatch?.candidate;
+
+  // Switch to inbox view
+  switchView('inbox');
+
+  // Load inbox then open this conversation directly
+  setTimeout(async () => {
+    await loadInbox();
+    if (candidate) {
+      setTimeout(() => openConversation(convId, candidate), 350);
+    }
+  }, 250);
+}
+
+
 // ═══════════════════════════════════════════
 // INBOX
 // ═══════════════════════════════════════════
@@ -838,7 +872,7 @@ async function loadInbox() {
   if (!result.conversations || result.conversations.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">💬</div>
+        <div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
         <div class="empty-title">No conversations yet</div>
         <p class="empty-sub">Say Hi to today's match to start a conversation.</p>
         <div style="margin-top:1.5rem;">
@@ -860,7 +894,7 @@ async function loadInbox() {
       </div>
       <div class="conv-main" id="conv-main">
         <div class="empty-state" style="padding:3rem;">
-          <div class="empty-icon">💬</div>
+          <div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
           <p class="empty-sub">Select a conversation</p>
         </div>
       </div>
@@ -1032,7 +1066,7 @@ async function loadHistory() {
   if (!result.matches || result.matches.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">🗓</div>
+        <div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
         <div class="empty-title">Your story starts tomorrow</div>
         <p class="empty-sub">Your first match arrives every morning. Each one is a chapter.</p>
       </div>
@@ -1271,7 +1305,7 @@ async function loadProfile() {
 
 function getArchetypeEmoji(name) {
   const map = {
-    Magician: '🔮', Mystic: '🌙', Knight: '⚔️', Maiden: '🌸',
+    Magician: '✦', Mystic: '🌙', Knight: '⚔️', Maiden: '🌸',
     Warrior: '🔥', Queen: '👑', King: '♛', Huntress: '🏹'
   };
   return map[name] || '✦';
@@ -1333,9 +1367,9 @@ function addAIMessage(text, role) {
   const msg = document.createElement('div');
   msg.className = `ai-message ${role}`;
 
-  const initials = role === 'user' ? getInitials(STATE.user?.name || 'You') : '🔮';
+  const initials = role === 'user' ? getInitials(STATE.user?.name || 'You') : 'K';
   msg.innerHTML = `
-    <div class="msg-avatar">${role === 'ai' ? '🔮' : initials}</div>
+    <div class="msg-avatar">${role === 'ai' ? 'K' : initials}</div>
     <div class="msg-bubble">${text}</div>
   `;
 
@@ -1353,7 +1387,7 @@ function showAITyping() {
   typingIndicator.className = 'ai-message ai';
   typingIndicator.id = 'ai-typing-indicator';
   typingIndicator.innerHTML = `
-    <div class="msg-avatar">🔮</div>
+    <div class="msg-avatar">K</div>
     <div class="msg-bubble ai-typing">
       <span></span><span></span><span></span>
     </div>

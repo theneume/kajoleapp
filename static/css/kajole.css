@@ -233,8 +233,13 @@ p { color: var(--text2); line-height: 1.75; }
   background: transparent;
   color: var(--text);
   border: 1px solid var(--border2);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-ghost svg { flex-shrink: 0; opacity: 0.7; }
+.btn-ghost:hover svg { opacity: 1; }
 
 .btn-surface {
   background: var(--surface);
@@ -260,6 +265,21 @@ p { color: var(--text2); line-height: 1.75; }
 .btn-lg { padding: 1rem 2.5rem; font-size: 1rem; }
 .btn-sm { padding: 0.5rem 1.2rem; font-size: 0.8rem; }
 .btn-full { width: 100%; }
+
+.btn-message {
+  background: linear-gradient(135deg, rgba(167,139,250,0.15), rgba(236,72,153,0.15));
+  color: var(--text);
+  border: 1px solid rgba(167,139,250,0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.btn-message:hover {
+  background: linear-gradient(135deg, rgba(167,139,250,0.25), rgba(236,72,153,0.25));
+  border-color: rgba(167,139,250,0.6);
+  color: var(--text);
+}
+.btn-message svg { flex-shrink: 0; }
 
 .btn:disabled {
   opacity: 0.4;
@@ -777,6 +797,19 @@ p { color: var(--text2); line-height: 1.75; }
   font-size: 1.1rem;
   border: 1px solid transparent;
 }
+.sidebar-nav-item svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+.sidebar-nav-item.active svg {
+  stroke: var(--accent);
+}
+.sidebar-nav-item:hover svg {
+  stroke: var(--text);
+}
 
 .sidebar-nav-item:hover {
   background: var(--surface2);
@@ -1053,7 +1086,9 @@ p { color: var(--text2); line-height: 1.75; }
 
 .match-actions {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
 }
 
 /* Waiting state */
