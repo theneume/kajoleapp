@@ -561,6 +561,9 @@ def get_gemini_via_rest(
                     'parts': [{'text': stamped}]
                 })
 
+        # Safety: ensure at least current turn exists
+        if not contents:
+            contents = []
         # Current user turn — inject FULL context block (rich RAG + profile detail)
         # This gives Gemini complete context on the most recent message
         if user_context:
@@ -605,6 +608,7 @@ def get_gemini_via_rest(
             data=data,
             headers={
                 'Authorization': f'Bearer {token}',
+                'x-goog-api-client': 'genai-python',
                 'Content-Type': 'application/json',
             },
             method='POST'
