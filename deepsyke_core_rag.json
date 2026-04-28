@@ -1,0 +1,222 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Complete Deepsyke Affinity Zones Framework - Core RAG for all bots",
+    "last_updated": "2026-01-14"
+  },
+  
+  "type_calculator": {
+    "description": "Calculate natal type from birth date and gender",
+    "rules": {
+      "day_ranges": {
+        "1-7": "SS",
+        "8-14": "SD",
+        "15-21": "DS",
+        "22-31": "DD"
+      },
+      "gender_archetypes": {
+        "SS": {"male": "Magician", "female": "Mystic"},
+        "SD": {"male": "Knight", "female": "Maiden"},
+        "DS": {"male": "Warrior", "female": "Queen"},
+        "DD": {"male": "King", "female": "Huntress"}
+      }
+    },
+    "critical_rules": [
+      "Archetypes are GENDER-SPECIFIC and FIXED",
+      "Male SS = Magician (NEVER Mystic)",
+      "Female SS = Mystic (NEVER Magician)",
+      "Male SD = Knight (NEVER Maiden)",
+      "Female SD = Maiden (NEVER Knight)",
+      "Male DS = Warrior (NEVER Queen)",
+      "Female DS = Queen (NEVER Warrior)",
+      "Male DD = King (NEVER Huntress)",
+      "Female DD = Huntress (NEVER King)",
+      "Males can have 'yin' energy expression but archetype stays male",
+      "Females can have 'yang' energy expression but archetype stays female"
+    ]
+  },
+  
+  "affinity_zones": {
+    "SS": {
+      "name": "Serotonin-Serotonin",
+      "archetypes": {"male": "Magician", "female": "Mystic"},
+      "neurochemical": "High serotonin baseline, stable mood regulation, deep processing capacity",
+      "processing": "Slow, deep, contemplative. Prefers depth over speed. Needs time to process.",
+      "characteristics": "Thoughtful, introspective, meaning-seeking, patient, depth-oriented",
+      "stress_response": "Withdraws inward, needs solitude to recharge, can become overwhelmed by rapid change",
+      "motivation": "Meaning, depth, understanding, authenticity, inner truth",
+      "social": "Prefers deep one-on-one connections over large groups. Quality over quantity.",
+      "work_style": "Methodical, thorough, needs autonomy. Excels in research, analysis, creative depth work.",
+      "integration": "Needs time alone to process. Values authenticity and depth in all interactions.",
+      "zones": "Thrives in calm, contemplative, meaningful environments. Struggles with rushed, superficial, or chaotic situations.",
+      "gravitors": "Attracted to depth, meaning, authenticity, wisdom, inner truth, and contemplation.",
+      "attraction_vectors": "May be drawn to DD types (action, results) or SD types (structure, guidance) when seeking balance."
+    },
+    
+    "SD": {
+      "name": "Serotonin-Dopamine",
+      "archetypes": {"male": "Knight", "female": "Maiden"},
+      "neurochemical": "Balanced serotonin-dopamine, stable with goal orientation, steady progress",
+      "processing": "Moderate pace, balanced approach. Can handle both depth and action.",
+      "characteristics": "Supportive, loyal, structured, reliable, balanced, growth-oriented",
+      "stress_response": "Seeks structure and support. Can become rigid or overly cautious under pressure.",
+      "motivation": "Growth, support, guidance, structure, helping others progress",
+      "social": "Supportive relationships, enjoys guiding and being guided. Team-oriented.",
+      "work_style": "Structured, reliable, supportive. Excels in teaching, mentoring, project management.",
+      "integration": "Needs clear structure and supportive relationships. Values loyalty and steady progress.",
+      "zones": "Thrives in structured, supportive, growth-oriented environments. Struggles with chaos or lack of direction.",
+      "gravitors": "Attracted to structure, guidance, support, growth, loyalty, and steady progress.",
+      "attraction_vectors": "May be drawn to DS types (creativity, variety) or SS types (depth, meaning) when seeking balance."
+    },
+    
+    "DS": {
+      "name": "Dopamine-Serotonin",
+      "archetypes": {"male": "Warrior", "female": "Queen"},
+      "neurochemical": "High dopamine drive with serotonin stability, creative energy with grounding",
+      "processing": "Fast, varied, creative. Enjoys exploration and novelty with some stability.",
+      "characteristics": "Creative, dynamic, inspiring, possibility-focused, enthusiastic, visionary",
+      "stress_response": "Seeks creative outlets and new possibilities. Can become scattered or restless.",
+      "motivation": "Creativity, innovation, possibilities, inspiration, exploration, variety",
+      "social": "Inspiring and energizing to others. Enjoys diverse connections and creative collaboration.",
+      "work_style": "Dynamic, creative, innovative. Excels in creative fields, entrepreneurship, leadership.",
+      "integration": "Needs creative freedom and variety. Values inspiration and possibility.",
+      "zones": "Thrives in creative, dynamic, possibility-rich environments. Struggles with rigid routine or limitation.",
+      "gravitors": "Attracted to creativity, innovation, possibilities, inspiration, exploration, and variety.",
+      "attraction_vectors": "May be drawn to SD types (structure, support) or DD types (action, results) when seeking balance."
+    },
+    
+    "DD": {
+      "name": "Dopamine-Dopamine",
+      "archetypes": {"male": "King", "female": "Huntress"},
+      "neurochemical": "Very high dopamine, intense drive, action-oriented, results-focused",
+      "processing": "Very fast, direct, efficient. Prefers action over contemplation.",
+      "characteristics": "Action-oriented, results-focused, efficient, competitive, achievement-driven, decisive",
+      "stress_response": "Increases activity and pushes harder. Can become aggressive or impatient.",
+      "motivation": "Achievement, results, competition, efficiency, tangible outcomes, winning",
+      "social": "Direct and efficient in relationships. Values competence and results.",
+      "work_style": "Fast-paced, results-driven, competitive. Excels in high-pressure, goal-oriented environments.",
+      "integration": "Needs action and tangible results. Values efficiency and achievement.",
+      "zones": "Thrives in action-oriented, competitive, results-focused environments. Struggles in slow, contemplative, or ambiguous situations.",
+      "gravitors": "Attracted to action, achievement, competition, goals, tangible results, and efficiency.",
+      "attraction_vectors": "May be drawn to SS types (depth, meaning) or SD types (structure, support) when seeking balance."
+    }
+  },
+  
+  "core_gravitors": {
+    "description": "Universal attraction themes that pull each type",
+    "SS_gravitors": [
+      "depth", "meaning", "authenticity", "wisdom", "inner_truth", "contemplation",
+      "understanding", "reflection", "substance", "essence", "soul", "mystery"
+    ],
+    "SD_gravitors": [
+      "structure", "guidance", "support", "growth", "loyalty", "progress",
+      "reliability", "stability", "mentorship", "development", "foundation", "trust"
+    ],
+    "DS_gravitors": [
+      "creativity", "innovation", "possibilities", "inspiration", "exploration", "variety",
+      "vision", "imagination", "discovery", "potential", "transformation", "adventure"
+    ],
+    "DD_gravitors": [
+      "action", "achievement", "competition", "goals", "results", "efficiency",
+      "success", "winning", "mastery", "power", "conquest", "dominance"
+    ]
+  },
+  
+  "communication_styles": {
+    "SS": {
+      "pace": "thoughtful, unhurried, contemplative",
+      "tone": "gentle, reassuring, depth-focused",
+      "keywords": ["naturally", "gradually", "discover", "explore", "reflect", "savor", "immerse", "contemplate"],
+      "phrases": [
+        "it's perfectly understandable to",
+        "you'll find that",
+        "take comfort in knowing",
+        "at a rhythm that feels right for you",
+        "without any pressure or rush"
+      ]
+    },
+    "SD": {
+      "pace": "steady, measured, balanced",
+      "tone": "supportive, encouraging, structured",
+      "keywords": ["step by step", "guided", "supported", "build", "develop", "grow", "progress"],
+      "phrases": [
+        "you'll be guided through",
+        "we'll support you every step",
+        "at your own comfortable pace",
+        "with clear structure and guidance",
+        "balanced approach to learning"
+      ]
+    },
+    "DS": {
+      "pace": "dynamic, varied, enthusiastic",
+      "tone": "creative, inspiring, possibility-focused",
+      "keywords": ["creatively", "explore", "innovate", "discover", "possibilities", "exciting", "venture"],
+      "phrases": [
+        "you'll discover creative possibilities",
+        "explore different approaches",
+        "find what truly inspires you",
+        "uncover new creative pathways",
+        "tap into your creative potential"
+      ]
+    },
+    "DD": {
+      "pace": "efficient, direct, purposeful",
+      "tone": "confident, action-oriented, results-focused",
+      "keywords": ["efficiently", "achieve", "master", "succeed", "accomplish", "complete", "reach"],
+      "phrases": [
+        "you'll see results efficiently",
+        "move forward with purpose",
+        "achieve your goals quickly",
+        "make tangible progress",
+        "get where you want to be"
+      ]
+    }
+  },
+  
+  "physical_traits": {
+    "SS": {
+      "general": "Soft features, gentle presence, contemplative expression",
+      "details": "Often have a dreamy or thoughtful quality, slower movements, calm demeanor"
+    },
+    "SD": {
+      "general": "Balanced features, approachable presence, steady expression",
+      "details": "Often have a reliable, trustworthy quality, measured movements, supportive demeanor"
+    },
+    "DS": {
+      "general": "Dynamic features, energetic presence, expressive face",
+      "details": "Often have an animated quality, varied movements, inspiring demeanor"
+    },
+    "DD": {
+      "general": "Strong features, commanding presence, intense expression",
+      "details": "Often have a powerful quality, decisive movements, confident demeanor"
+    }
+  },
+  
+  "compatibility_matrix": {
+    "description": "How types interact and attract each other",
+    "SS_compatibility": {
+      "with_SS": "Deep understanding, shared pace, risk of stagnation",
+      "with_SD": "SS gains structure, SD gains depth, complementary",
+      "with_DS": "SS inspired by creativity, DS grounded by depth, balancing",
+      "with_DD": "Strong polarity, SS provides meaning, DD provides action, magnetic"
+    },
+    "SD_compatibility": {
+      "with_SS": "SD provides guidance, SS provides depth, complementary",
+      "with_SD": "Shared values, mutual support, stable partnership",
+      "with_DS": "SD provides structure, DS provides creativity, balancing",
+      "with_DD": "SD supports, DD drives, complementary dynamics"
+    },
+    "DS_compatibility": {
+      "with_SS": "DS energizes, SS grounds, balancing polarity",
+      "with_SD": "DS innovates, SD structures, complementary",
+      "with_DS": "Shared creativity, mutual inspiration, dynamic partnership",
+      "with_DD": "Both high energy, competitive or collaborative, intense"
+    },
+    "DD_compatibility": {
+      "with_SS": "Strong polarity, DD provides action, SS provides meaning, magnetic",
+      "with_SD": "DD drives, SD supports, complementary",
+      "with_DS": "Both high energy, can compete or collaborate, intense",
+      "with_DD": "Shared drive, competitive, risk of conflict or powerful alliance"
+    }
+  }
+}
